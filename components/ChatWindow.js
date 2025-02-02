@@ -13,7 +13,7 @@ export function ChatWindow() {
   messageArea.id = "messageArea";
   messageArea.className = "message-area";
 
-  // Create emoji panel (initially hidden)
+  // Create emoji panel
   const emojiPanel = document.createElement("div");
   emojiPanel.id = "emojiPanel";
   emojiPanel.className = "emoji-panel";
@@ -24,7 +24,7 @@ export function ChatWindow() {
   inputArea.className = "input-area";
   const chatInput = document.createElement("input");
   chatInput.id = "chatInput";
-  chatInput.placeholder = "Send an emoji...";
+  chatInput.placeholder = "Type your emoji...";
   chatInput.autocomplete = "off";
   const sendBtn = document.createElement("button");
   sendBtn.id = "sendBtn";
@@ -39,7 +39,7 @@ export function ChatWindow() {
   inputArea.appendChild(chatInput);
   inputArea.appendChild(sendBtn);
 
-  // Assemble chat container
+  // Assemble the chat window
   const chatContainer = document.createElement("div");
   chatContainer.className = "chat-container";
   chatContainer.appendChild(header);

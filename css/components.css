@@ -1,0 +1,86 @@
+/* css/components.css */
+header {
+    padding: 1em;
+    text-align: center;
+    background: #242424;
+    border-bottom: 1px solid #333;
+  }
+  header h1 {
+    font-size: 1.5em;
+    color: var(--accent-color);
+  }
+  .message-area {
+    flex: 1;
+    padding: 1em;
+    overflow-y: auto;
+  }
+  .message {
+    margin: 0.5em 0;
+    padding: 0.7em;
+    border-radius: 8px;
+    max-width: 80%;
+    word-wrap: break-word;
+    font-size: 0.95em;
+  }
+  .message.outgoing {
+    background-color: var(--message-outgoing);
+    align-self: flex-end;
+  }
+  .message.incoming {
+    background-color: var(--message-incoming);
+    align-self: flex-start;
+  }
+  .input-area {
+    display: flex;
+    padding: 0.8em;
+    border-top: 1px solid #333;
+    background: #242424;
+  }
+  .input-area input {
+    flex: 1;
+    padding: 0.8em;
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-size: 1em;
+  }
+  .input-area button {
+    margin-left: 0.5em;
+    padding: 0 1em;
+    border: none;
+    background: var(--accent-color);
+    color: #121212;
+    font-size: 1em;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .input-area button:hover {
+    opacity: 0.9;
+  }
+  .emoji-panel {
+    display: flex;
+    justify-content: space-around;
+    background: var(--emoji-bg);
+    padding: 0.5em;
+    border-top: 1px solid #333;
+  }
+  .emoji-button {
+    background: transparent;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .emoji-button:hover {
+    transform: scale(1.2);
+  }
+  /* Optional: scrollbar styling */
+  .message-area::-webkit-scrollbar {
+    width: 8px;
+  }
+  .message-area::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+  }
+  

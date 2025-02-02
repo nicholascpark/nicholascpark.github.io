@@ -1,1 +1,154 @@
-Hello World
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My AI Portfolio</title>
+  <style>
+    /* Basic Reset and Typography */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background-color: #fff;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2em;
+    }
+    .social-links {
+      margin-top: 10px;
+    }
+    .social-links a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #0073e6;
+      font-weight: bold;
+    }
+    /* Chat UI Styles */
+    .chat-section {
+      margin-top: 30px;
+    }
+    .chat-container {
+      border: 1px solid #ddd;
+      background: #fafafa;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    .chat-message {
+      margin: 8px 0;
+      padding: 8px;
+      border-radius: 5px;
+    }
+    .chat-message.user {
+      background-color: #d0eaff;
+      text-align: right;
+    }
+    .chat-message.bot {
+      background-color: #d4fcd4;
+      text-align: left;
+    }
+    .chat-form {
+      display: flex;
+    }
+    .chat-input {
+      flex: 1;
+      padding: 10px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+    .chat-button {
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      background-color: #0073e6;
+      color: #fff;
+      margin-left: 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .chat-button:hover {
+      background-color: #005bb5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>My AI Portfolio</h1>
+      <div class="social-links">
+        <!-- Replace the URLs with your actual account links -->
+        <a href="https://github.com/yourusername" target="_blank">GitHub</a>
+        <a href="https://linkedin.com/in/yourusername" target="_blank">LinkedIn</a>
+        <a href="https://twitter.com/yourusername" target="_blank">Twitter</a>
+      </div>
+    </header>
+    
+    <section class="chat-section">
+      <h2>Chat with My AI Demo</h2>
+      <div class="chat-container" id="chatContainer">
+        <!-- Chat messages will appear here -->
+      </div>
+      <form id="chatForm" class="chat-form">
+        <input type="text" id="chatInput" class="chat-input" placeholder="Type your message here..." autocomplete="off" required>
+        <button type="submit" class="chat-button">Send</button>
+      </form>
+    </section>
+  </div>
+  
+  <script>
+    // Minimal Chat UI functionality
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const chatContainer = document.getElementById('chatContainer');
+
+    chatForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const userText = chatInput.value.trim();
+      if (userText === '') return;
+      
+      // Append the user's message
+      appendMessage('user', userText);
+      
+      // Clear the input field
+      chatInput.value = '';
+      
+      // Simulate a bot response (for demonstration)
+      setTimeout(() => {
+        const botResponse = generateBotResponse(userText);
+        appendMessage('bot', botResponse);
+      }, 1000);
+    });
+
+    function appendMessage(sender, message) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('chat-message', sender);
+      messageDiv.textContent = sender === 'user' ? `You: ${message}` : `Bot: ${message}`;
+      chatContainer.appendChild(messageDiv);
+      // Auto-scroll to the bottom of the chat container
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function generateBotResponse(input) {
+      // For demonstration, this function reverses the user input.
+      // Replace with your AI logic or API call as needed.
+      return input.split('').reverse().join('');
+    }
+  </script>
+</body>
+</html>

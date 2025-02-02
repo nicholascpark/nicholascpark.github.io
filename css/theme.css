@@ -1,7 +1,6 @@
-/* theme.css */
+/* css/theme.css */
 :root {
-    /* Ambient dark mode colors */
-    --bg-color: #121212;
+    --bg-color: #010571;
     --bg-gradient: linear-gradient(135deg, #121212 0%, #1e1e2f 100%);
     --text-color: #e0e0e0;
     --accent-color: #bb86fc;

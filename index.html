@@ -1,154 +1,252 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>My AI Portfolio</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ambient Night Chat with Emoji Suggestions</title>
+  <!-- Ambient Night Theme: CSS variables for a dark, soothing design -->
   <style>
-    /* Basic Reset and Typography */
+    /* Define CSS variables for our ambient night theme */
+    :root {
+      --bg-color: #121212;         /* Very dark background */
+      --bg-gradient: linear-gradient(135deg, #121212 0%, #1e1e2f 100%);
+      --text-color: #e0e0e0;         /* Soft light text */
+      --accent-color: #bb86fc;       /* A soft purple accent */
+      --input-bg: #1e1e2f;
+      --input-border: #333;
+      --message-outgoing: #2c2c38;
+      --message-incoming: #3a3a48;
+      --emoji-bg: rgba(187, 134, 252, 0.15);
+    }
+
+    /* Global styles for dark ambient mode */
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
       margin: 0;
       padding: 0;
-      color: #333;
+      font-family: Arial, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
+
     .container {
-      max-width: 800px;
-      margin: 40px auto;
-      background-color: #fff;
-      padding: 20px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 500px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
+
     header {
+      padding: 1em;
       text-align: center;
-      margin-bottom: 20px;
+      background: #242424;
+      border-bottom: 1px solid #333;
     }
     header h1 {
       margin: 0;
-      font-size: 2em;
+      font-size: 1.5em;
+      color: var(--accent-color);
     }
-    .social-links {
-      margin-top: 10px;
-    }
-    .social-links a {
-      margin: 0 10px;
-      text-decoration: none;
-      color: #0073e6;
-      font-weight: bold;
-    }
-    /* Chat UI Styles */
-    .chat-section {
-      margin-top: 30px;
-    }
+
     .chat-container {
-      border: 1px solid #ddd;
-      background: #fafafa;
-      padding: 10px;
-      height: 300px;
-      overflow-y: auto;
-      margin-bottom: 10px;
-    }
-    .chat-message {
-      margin: 8px 0;
-      padding: 8px;
-      border-radius: 5px;
-    }
-    .chat-message.user {
-      background-color: #d0eaff;
-      text-align: right;
-    }
-    .chat-message.bot {
-      background-color: #d4fcd4;
-      text-align: left;
-    }
-    .chat-form {
-      display: flex;
-    }
-    .chat-input {
       flex: 1;
-      padding: 10px;
-      font-size: 1em;
-      border: 1px solid #ccc;
-      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      padding: 1em;
+      overflow: hidden;
     }
-    .chat-button {
-      padding: 10px 20px;
+    /* Message display area */
+    .message-area {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 0.5em;
+      padding-right: 0.5em;
+    }
+    .message {
+      margin: 0.5em 0;
+      padding: 0.7em;
+      border-radius: 8px;
+      max-width: 80%;
+      word-wrap: break-word;
+      font-size: 0.95em;
+    }
+    .message.outgoing {
+      background-color: var(--message-outgoing);
+      align-self: flex-end;
+    }
+    .message.incoming {
+      background-color: var(--message-incoming);
+      align-self: flex-start;
+    }
+    /* Input area */
+    .input-area {
+      display: flex;
+      padding: 0.8em;
+      border-top: 1px solid #333;
+      background: #242424;
+    }
+    .input-area input {
+      flex: 1;
+      padding: 0.8em;
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      background: var(--input-bg);
+      color: var(--text-color);
       font-size: 1em;
+    }
+    .input-area button {
+      margin-left: 0.5em;
+      padding: 0 1em;
       border: none;
-      background-color: #0073e6;
-      color: #fff;
-      margin-left: 10px;
-      border-radius: 3px;
+      background: var(--accent-color);
+      color: #121212;
+      font-size: 1em;
+      border-radius: 4px;
       cursor: pointer;
     }
-    .chat-button:hover {
-      background-color: #005bb5;
+    .input-area button:hover {
+      opacity: 0.9;
+    }
+
+    /* Emoji suggestion panel */
+    .emoji-panel {
+      display: flex;
+      justify-content: space-around;
+      background: var(--emoji-bg);
+      padding: 0.5em;
+      border-top: 1px solid #333;
+    }
+    .emoji-button {
+      background: transparent;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .emoji-button:hover {
+      transform: scale(1.2);
+    }
+
+    /* Scrollbar styling for message area */
+    .message-area::-webkit-scrollbar {
+      width: 8px;
+    }
+    .message-area::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>My AI Portfolio</h1>
-      <div class="social-links">
-        <!-- Replace the URLs with your actual account links -->
-        <a href="https://github.com/yourusername" target="_blank">GitHub</a>
-        <a href="https://linkedin.com/in/yourusername" target="_blank">LinkedIn</a>
-        <a href="https://twitter.com/yourusername" target="_blank">Twitter</a>
-      </div>
+      <h1>Ambient Night Chat</h1>
     </header>
-    
-    <section class="chat-section">
-      <h2>Chat with My AI Demo</h2>
-      <div class="chat-container" id="chatContainer">
-        <!-- Chat messages will appear here -->
+    <div class="chat-container">
+      <!-- Message display area -->
+      <div class="message-area" id="messageArea"></div>
+      <!-- Emoji suggestion panel (hidden by default) -->
+      <div class="emoji-panel" id="emojiPanel" style="display: none;"></div>
+      <!-- Input area for sending messages -->
+      <div class="input-area">
+        <input type="text" id="chatInput" placeholder="Type your message..." autocomplete="off" />
+        <button id="sendBtn">Send</button>
       </div>
-      <form id="chatForm" class="chat-form">
-        <input type="text" id="chatInput" class="chat-input" placeholder="Type your message here..." autocomplete="off" required>
-        <button type="submit" class="chat-button">Send</button>
-      </form>
-    </section>
+    </div>
   </div>
-  
+
+  <!-- Modular JavaScript code -->
   <script>
-    // Minimal Chat UI functionality
-    const chatForm = document.getElementById('chatForm');
-    const chatInput = document.getElementById('chatInput');
-    const chatContainer = document.getElementById('chatContainer');
+    // Immediately Invoked Function Expression (IIFE) for modularity.
+    (function() {
+      // Cache DOM elements
+      const messageArea = document.getElementById("messageArea");
+      const chatInput = document.getElementById("chatInput");
+      const sendBtn = document.getElementById("sendBtn");
+      const emojiPanel = document.getElementById("emojiPanel");
 
-    chatForm.addEventListener('submit', function(event) {
-      event.preventDefault();
-      const userText = chatInput.value.trim();
-      if (userText === '') return;
-      
-      // Append the user's message
-      appendMessage('user', userText);
-      
-      // Clear the input field
-      chatInput.value = '';
-      
-      // Simulate a bot response (for demonstration)
-      setTimeout(() => {
-        const botResponse = generateBotResponse(userText);
-        appendMessage('bot', botResponse);
-      }, 1000);
-    });
+      // A modular function that (for now) simulates processing of the chat flow.
+      // In production, replace this with your LangGraph-based chat flow script.
+      // It returns an array of three emoji candidates based on the input text.
+      function getEmojiCandidates(inputText) {
+        // Dummy implementation: you can later call your LangGraph script/API.
+        // For example purposes, return a fixed array (could be based on sentiment).
+        // You might return candidates such as "😊", "👍", "🎉" for a positive tone.
+        // Alternatively, adjust based on inputText analysis.
+        return ["😊", "👍", "🎉"];
+      }
 
-    function appendMessage(sender, message) {
-      const messageDiv = document.createElement('div');
-      messageDiv.classList.add('chat-message', sender);
-      messageDiv.textContent = sender === 'user' ? `You: ${message}` : `Bot: ${message}`;
-      chatContainer.appendChild(messageDiv);
-      // Auto-scroll to the bottom of the chat container
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
+      // Function to append a message to the message area.
+      function appendMessage(text, type) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "message " + type;
+        messageDiv.textContent = text;
+        messageArea.appendChild(messageDiv);
+        // Scroll to the bottom.
+        messageArea.scrollTop = messageArea.scrollHeight;
+      }
 
-    function generateBotResponse(input) {
-      // For demonstration, this function reverses the user input.
-      // Replace with your AI logic or API call as needed.
-      return input.split('').reverse().join('');
-    }
+      // When the user clicks send or presses Enter.
+      function sendMessage() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+        appendMessage("You: " + text, "outgoing");
+        chatInput.value = "";
+        // Simulate processing the input and getting emoji candidates.
+        const candidates = getEmojiCandidates(text);
+        showEmojiSuggestions(candidates);
+      }
+
+      // Display candidate emojis in the emoji panel.
+      function showEmojiSuggestions(candidates) {
+        // Clear any existing suggestions.
+        emojiPanel.innerHTML = "";
+        if (candidates && candidates.length === 3) {
+          candidates.forEach(emoji => {
+            const btn = document.createElement("button");
+            btn.className = "emoji-button";
+            btn.textContent = emoji;
+            btn.addEventListener("click", function() {
+              // When an emoji is clicked, append it as a new incoming message.
+              appendMessage("Bot: " + emoji, "incoming");
+              // Hide the emoji panel.
+              emojiPanel.style.display = "none";
+            });
+            emojiPanel.appendChild(btn);
+          });
+          // Show the emoji panel.
+          emojiPanel.style.display = "flex";
+        } else {
+          emojiPanel.style.display = "none";
+        }
+      }
+
+      // Attach event listeners
+      sendBtn.addEventListener("click", sendMessage);
+      chatInput.addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      // For demonstration, you can also simulate receiving a message (and showing emoji suggestions).
+      // For example, if you want to simulate an incoming bot message:
+      /*
+      setTimeout(function() {
+        appendMessage("Bot: How are you feeling tonight?", "incoming");
+        // Simulate candidate emojis (you might want to base these on sentiment analysis)
+        showEmojiSuggestions(["😌", "🤔", "😴"]);
+      }, 2000);
+      */
+    })();
   </script>
 </body>
 </html>

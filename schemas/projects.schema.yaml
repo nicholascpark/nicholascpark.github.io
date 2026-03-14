@@ -1,0 +1,30 @@
+# Schema for content/projects.yaml
+# Defines the structural contract for curated projects
+
+type: object
+required: [featured]
+properties:
+  featured:
+    type: array
+    items:
+      type: object
+      required: [name, repo, url, tagline, category]
+      properties:
+        name:
+          type: string
+          description: Display name of the project
+        repo:
+          type: string
+          description: GitHub repo name
+        url:
+          type: string
+          format: uri
+        tagline:
+          type: string
+          description: One-line description
+        category:
+          type: string
+          enum: [agents, reinforcement-learning, nlp, cognition, tools, other]
+        why_featured:
+          type: string
+          description: Internal note — why this project is featured (not rendered)

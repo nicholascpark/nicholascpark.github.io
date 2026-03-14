@@ -1,0 +1,13 @@
+# Site configuration — keeps deployment/hosting concerns separate from content
+# Change these if you move off GitHub Pages
+
+hosting:
+  platform: github-pages  # github-pages | netlify | vercel | cloudflare | custom
+  base_url: https://nicholascpark.github.io
+  cname: ""  # Custom domain, if any
+
+# CDN dependencies — pinned versions for reproducibility
+dependencies:
+  js_yaml: https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js
+
+# Future: build settings, analytics, etc.

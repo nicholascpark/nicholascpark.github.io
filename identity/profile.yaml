@@ -1,0 +1,25 @@
+# Core identity — the factual foundation
+# Everything here is objective and verifiable
+
+name: Nicholas C. Park
+location: New York City Metropolitan Area
+
+languages:
+  - language: English
+    proficiency: Native
+  - language: Korean
+    proficiency: Native
+
+links:
+  github: https://github.com/nicholascpark
+  linkedin: https://www.linkedin.com/in/nicholas-c-park/
+  email: nickpark1209@gmail.com
+
+# Business ventures
+ventures:
+  - name: Zealot Analytics
+    role: Founder
+    type: LLC
+    focus: AI consulting and hands-on engineering
+    url: ""  # Will point to separate site when ready
+    status: active

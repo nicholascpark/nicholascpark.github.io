@@ -1,0 +1,44 @@
+# Curated projects — selective, narrative-driven
+# Not every repo belongs here. Only projects that serve the positioning.
+
+featured:
+  - name: Via Negativa
+    repo: via-negativa-free-form-stress
+    url: https://github.com/nicholascpark/via-negativa-free-form-stress
+    tagline: A metacognitive skill applying negative perception to thinking itself
+    category: cognition
+    why_featured: >
+      Demonstrates the philosophical/cognitive dimension — not just an engineer,
+      but someone who thinks about the nature of thought.
+
+  - name: MADDPG Google Football
+    repo: MADDPGGoogleFootball
+    url: https://github.com/nicholascpark/MADDPGGoogleFootball
+    tagline: Multi-agent deep reinforcement learning in competitive environments
+    category: reinforcement-learning
+    why_featured: >
+      Multi-agent RL is central to the positioning. Shows research depth
+      and ability to work on complex coordination problems.
+
+  - name: Adversarial NLI Filtering
+    repo: adversarially-filter-ANLI-aflite
+    url: https://github.com/nicholascpark/adversarially-filter-ANLI-aflite
+    tagline: Improving accuracy through adversarial dataset filtering
+    category: nlp
+    why_featured: >
+      Shows NLP research depth and adversarial robustness thinking —
+      the rigor behind the applied work.
+
+  - name: Claire
+    repo: claire-v1
+    url: https://github.com/nicholascpark/claire-v1
+    tagline: AI agent system
+    category: agents
+    why_featured: >
+      Direct evidence of agent-building practice. The applied side
+      of the research interests.
+
+# Projects intentionally not featured:
+# - AzureBlobStorageTools (utility, doesn't serve narrative)
+# - ClusterVisualizer (minor, older)
+# - Time-Series-Analysis-in-R (actuarial era, de-emphasized per positioning)

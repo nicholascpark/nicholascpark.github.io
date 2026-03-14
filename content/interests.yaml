@@ -1,0 +1,51 @@
+# Intellectual interests — what Nicholas thinks about
+# These inform the site's "interests" section and guide content generation
+
+interests:
+  - name: AI Agents & Multi-Agent Systems
+    depth: primary
+    description: >
+      Building and reasoning about autonomous agents — from single-agent RL
+      to multi-agent coordination. Practical agent engineering (LangGraph,
+      tool-use architectures) alongside theoretical foundations.
+    projects:
+      - claire-v0
+      - claire-v1
+      - Claims-Handler-Agent-v1
+
+  - name: Reinforcement Learning
+    depth: primary
+    description: >
+      Deep RL methods applied to complex environments. MADDPG in multi-agent
+      settings, DDQN for control problems, SARSA for tabular methods.
+      Interest spans from practical implementation to theoretical guarantees.
+    projects:
+      - MADDPGGoogleFootball
+      - LunarLanderDDQN
+      - SARSA-Frozen-Lake
+
+  - name: Human Cognition & Metacognition
+    depth: growing
+    description: >
+      How humans think about thinking. The via-negativa project explores
+      negative perception as a metacognitive skill — applying subtraction
+      to thought itself. Where AI meets cognitive science.
+    projects:
+      - via-negativa-free-form-stress
+
+  - name: Category Theory & Mathematical Foundations
+    depth: exploratory
+    description: >
+      Abstract mathematical structures as a lens for understanding
+      computation, learning, and cognition. Compositional thinking
+      applied beyond pure mathematics.
+    projects: []
+
+  - name: Natural Language Processing
+    depth: foundation
+    description: >
+      Transformer architectures, sequence-to-sequence models, adversarial
+      robustness in NLI. A foundation that informs current agent work.
+    projects:
+      - Transformers-and-Seq2Seq
+      - adversarially-filter-ANLI-aflite

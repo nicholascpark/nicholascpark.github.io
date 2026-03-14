@@ -1,0 +1,64 @@
+# Schema for identity/profile.yaml
+# Defines the structural contract for the core profile data
+
+type: object
+required: [name, links]
+properties:
+  name:
+    type: string
+    description: Full name
+
+  location:
+    type: string
+
+  languages:
+    type: array
+    items:
+      type: object
+      required: [language, proficiency]
+      properties:
+        language:
+          type: string
+        proficiency:
+          type: string
+          enum: [Native, Fluent, Professional, Conversational]
+
+  links:
+    type: object
+    required: [github, linkedin]
+    properties:
+      github:
+        type: string
+        format: uri
+      linkedin:
+        type: string
+        format: uri
+      email:
+        type: string
+        format: email
+      twitter:
+        type: string
+        format: uri
+      website:
+        type: string
+        format: uri
+
+  ventures:
+    type: array
+    items:
+      type: object
+      required: [name, role, focus, status]
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+        type:
+          type: string
+        focus:
+          type: string
+        url:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, planned]

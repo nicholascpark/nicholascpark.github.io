@@ -1,0 +1,85 @@
+# Schema for content/resume.yaml
+# Defines the structural contract for the living resume
+
+type: object
+properties:
+  education:
+    type: array
+    items:
+      type: object
+      required: [institution]
+      properties:
+        institution:
+          type: string
+        degree:
+          type: string
+        years:
+          type: string
+        gpa:
+          type: string
+        coursework:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+
+  experience:
+    type: array
+    items:
+      type: object
+      required: [company, role]
+      properties:
+        company:
+          type: string
+        role:
+          type: string
+        years:
+          type: string
+        description:
+          type: string
+        technologies:
+          type: array
+          items:
+            type: string
+        highlights:
+          type: array
+          items:
+            type: string
+
+  ventures:
+    type: array
+    items:
+      type: object
+      required: [name, role, focus, status]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        role:
+          type: string
+        focus:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, planned]
+
+  certifications:
+    type: array
+    items:
+      type: object
+      required: [name, issuer, date]
+      properties:
+        name:
+          type: string
+        issuer:
+          type: string
+        date:
+          type: string
+          description: YYYY-MM format
+
+  languages:
+    type: array
+    items:
+      type: string

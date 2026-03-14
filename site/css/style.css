@@ -1,0 +1,264 @@
+/* ===================================
+   Nicholas C. Park — Personal Site
+   Minimal, academic, philosophical
+   =================================== */
+
+:root {
+  --color-bg: #faf9f6;
+  --color-text: #2c2c2c;
+  --color-text-muted: #6b6b6b;
+  --color-text-light: #999;
+  --color-accent: #4a5568;
+  --color-link: #2c2c2c;
+  --color-link-hover: #000;
+  --color-border: #e2e0dc;
+  --color-card-bg: #f5f4f1;
+
+  --font-serif: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --max-width: 680px;
+  --spacing-unit: 1.5rem;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  line-height: 1.7;
+}
+
+#root {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: calc(var(--spacing-unit) * 4) var(--spacing-unit) calc(var(--spacing-unit) * 3);
+}
+
+/* --- Header / Identity --- */
+
+.site-header {
+  margin-bottom: calc(var(--spacing-unit) * 3);
+}
+
+.site-header h1 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 2.4rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 0.4rem;
+}
+
+.site-header .tagline {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: var(--color-text-muted);
+  letter-spacing: 0.03em;
+  margin-bottom: calc(var(--spacing-unit) * 1.2);
+}
+
+/* --- Links row --- */
+
+.links-row {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.links-row a {
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: color 0.2s ease;
+}
+
+.links-row a:hover {
+  color: var(--color-link-hover);
+}
+
+.links-row .separator {
+  color: var(--color-border);
+  font-size: 0.7rem;
+  user-select: none;
+}
+
+/* --- Sections --- */
+
+.section {
+  margin-bottom: calc(var(--spacing-unit) * 2.5);
+}
+
+.section-title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 1.3rem;
+  margin-bottom: var(--spacing-unit);
+  color: var(--color-text);
+}
+
+.section-prose {
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--color-text);
+}
+
+.section-prose p {
+  margin-bottom: var(--spacing-unit);
+}
+
+/* --- Interests --- */
+
+.interests-list {
+  list-style: none;
+}
+
+.interests-list li {
+  margin-bottom: calc(var(--spacing-unit) * 1.2);
+}
+
+.interest-name {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 1.05rem;
+  margin-bottom: 0.2rem;
+}
+
+.interest-depth {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-left: 0.5rem;
+}
+
+.interest-description {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  line-height: 1.7;
+}
+
+/* --- Projects --- */
+
+.projects-list {
+  list-style: none;
+}
+
+.projects-list li {
+  margin-bottom: calc(var(--spacing-unit) * 1.2);
+}
+
+.project-name {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 1.05rem;
+}
+
+.project-name a {
+  color: var(--color-text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-border);
+  transition: border-color 0.2s ease;
+}
+
+.project-name a:hover {
+  border-color: var(--color-text);
+}
+
+.project-tagline {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin-top: 0.15rem;
+}
+
+/* --- Footer --- */
+
+.site-footer {
+  margin-top: calc(var(--spacing-unit) * 3);
+  padding-top: var(--spacing-unit);
+  border-top: 1px solid var(--color-border);
+}
+
+.site-footer p {
+  font-size: 0.78rem;
+  color: var(--color-text-light);
+  line-height: 1.6;
+}
+
+.site-footer a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.site-footer a:hover {
+  border-color: var(--color-text-muted);
+}
+
+/* --- Venture tag (Zealot Analytics) --- */
+
+.venture-tag {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.venture-tag a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-border);
+  transition: border-color 0.2s ease;
+}
+
+.venture-tag a:hover {
+  border-color: var(--color-text-muted);
+}
+
+/* --- Responsive --- */
+
+@media (max-width: 600px) {
+  html {
+    font-size: 16px;
+  }
+
+  #root {
+    padding: calc(var(--spacing-unit) * 2.5) var(--spacing-unit) calc(var(--spacing-unit) * 2);
+  }
+
+  .site-header h1 {
+    font-size: 1.9rem;
+  }
+
+  .links-row {
+    gap: 1rem;
+  }
+}
+
+/* --- Loading state --- */
+
+.loading {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  font-style: italic;
+}

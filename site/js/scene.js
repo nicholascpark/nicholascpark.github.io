@@ -231,15 +231,20 @@
       dummy.position.set(v.x, v.y, v.z);
       // Apply group's world rotation to get world position
       dummy.position.applyMatrix4(group.matrixWorld);
-      dummy.quaternion.copy(camQuat);
-      dummy.scale.setScalar(1);
-      dummy.updateMatrix();
 
-      // But we need position in group-local space for the InstancedMesh
-      // So: set local position, apply inverse group rotation to camera quat
+      // Depth-based scaling: front vertices larger, rear smaller
+      var depthZ = dummy.position.z;
+      var depthScale = THREE.MathUtils.clamp(
+        THREE.MathUtils.mapLinear(depthZ, -3, 3, 0.4, 1.8),
+        0.4, 1.8
+      );
+
+      // We need position in group-local space for the InstancedMesh
+      // Set local position, apply inverse group rotation to camera quat
       dummy.position.set(v.x, v.y, v.z);
       const invGroupQuat = group.quaternion.clone().invert();
       dummy.quaternion.copy(camQuat).premultiply(invGroupQuat);
+      dummy.scale.setScalar(depthScale);
       dummy.updateMatrix();
       pentMesh.setMatrixAt(i, dummy.matrix);
     });

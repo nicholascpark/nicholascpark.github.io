@@ -12,8 +12,8 @@
   /* Gold accents — muted for light theme */
   --color-gold:          #a08540;
   --color-gold-bright:   #c9a84c;
-  --color-gold-dim:      #c4b57a;
-  --color-gold-faint:    rgba(160, 133, 64, 0.08);
+  --color-gold-dim:      #8a8578;
+  --color-gold-faint:    rgba(74, 70, 64, 0.06);
 
   /* Text hierarchy */
   --color-text:          #2c2a26;
@@ -21,9 +21,9 @@
   --color-text-muted:    #7a7568;
   --color-text-dim:      #b0a998;
 
-  /* Borders & lines */
-  --color-border:        rgba(160, 133, 64, 0.15);
-  --color-border-strong: rgba(160, 133, 64, 0.3);
+  /* Borders & lines — platinum to match dodecahedron */
+  --color-border:        rgba(74, 70, 64, 0.15);
+  --color-border-strong: rgba(74, 70, 64, 0.3);
 
   /* Typography */
   --font-serif: 'EB Garamond', Georgia, 'Times New Roman', serif;
@@ -159,8 +159,8 @@ body {
   z-index: 1;
   background: radial-gradient(
     300px at var(--mouse-x, -300px) var(--mouse-y, -300px),
-    rgba(160, 133, 64, 0.12),
-    rgba(160, 133, 64, 0.04) 40%,
+    rgba(74, 70, 64, 0.10),
+    rgba(74, 70, 64, 0.03) 40%,
     transparent
   );
   transition: opacity 0.3s ease;
@@ -194,8 +194,8 @@ body {
   z-index: 1;
   background: radial-gradient(
     circle,
-    rgba(160, 133, 64, 0.2),
-    rgba(160, 133, 64, 0.06) 40%,
+    rgba(74, 70, 64, 0.15),
+    rgba(74, 70, 64, 0.04) 40%,
     transparent 70%
   );
   animation: gleam 0.7s ease-out forwards;
@@ -328,6 +328,7 @@ body {
   margin: calc(var(--spacing-unit) * 2.5) 0;
   gap: 1.2rem;
   opacity: 0.3;
+  color: var(--color-text-dim);
 }
 
 .section-divider::before,
@@ -395,15 +396,15 @@ body {
 
 .interests-list li {
   padding: calc(var(--spacing-unit) * 0.6) calc(var(--spacing-unit) * 0.8);
-  border-left: 2px solid rgba(160, 133, 64, calc(0.10 + var(--dodeca-breathe, 0) * 0.25));
+  border-left: 2px solid rgba(74, 70, 64, calc(0.10 + var(--dodeca-breathe, 0) * 0.25));
   border-radius: 0 8px 8px 0;
   transition: border-color 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;
 }
 
 .interests-list li:hover {
   border-left-color: var(--color-gold);
-  background: rgba(160, 133, 64, 0.04);
-  box-shadow: -2px 0 16px rgba(160, 133, 64, 0.08);
+  background: rgba(74, 70, 64, 0.04);
+  box-shadow: -2px 0 16px rgba(74, 70, 64, 0.06);
 }
 
 .interest-name {
@@ -446,8 +447,8 @@ body {
 
 .projects-list li:hover {
   transform: translateY(-3px);
-  background: rgba(160, 133, 64, 0.03);
-  box-shadow: 0 6px 24px rgba(160, 133, 64, 0.07);
+  background: rgba(74, 70, 64, 0.03);
+  box-shadow: 0 6px 24px rgba(74, 70, 64, 0.05);
 }
 
 .project-name {
@@ -584,7 +585,7 @@ body {
 /* --- Selection color --- */
 
 ::selection {
-  background: rgba(160, 133, 64, 0.2);
+  background: rgba(74, 70, 64, 0.15);
   color: var(--color-text-bright);
 }
 

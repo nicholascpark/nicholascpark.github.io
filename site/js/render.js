@@ -72,7 +72,7 @@ function createSacredDivider() {
   svg.setAttribute('width', '20');
   svg.setAttribute('height', '20');
   svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', '#a08540');
+  svg.setAttribute('stroke', 'currentColor');
   svg.setAttribute('stroke-width', '0.8');
 
   // Central circle

@@ -94,11 +94,12 @@
   height: 28px;
   cursor: pointer;
   color: var(--color-text-dim);
+  font-size: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease,
-              opacity 0.5s ease-out, transform 0.5s ease-out;
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out,
+              color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
   flex-shrink: 0;
   line-height: 1;
   position: absolute;
@@ -106,37 +107,10 @@
   top: 0;
 }
 
-/* Hidden until entrance animation */
 .theme-toggle.toggle-hidden {
   opacity: 0;
-  transform: scale(0.5);
+  transform: scale(0.6);
   pointer-events: none;
-}
-
-/* Entrance ripple — single expanding ring */
-@keyframes toggleRipple {
-  0% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  100% {
-    transform: scale(3);
-    opacity: 0;
-  }
-}
-
-.theme-toggle::after {
-  content: '';
-  position: absolute;
-  inset: -1.5px;
-  border-radius: 50%;
-  border: 1.5px solid var(--color-border-strong);
-  pointer-events: none;
-  opacity: 0;
-}
-
-.theme-toggle.ripple::after {
-  animation: toggleRipple 0.8s ease-out forwards;
 }
 
 .theme-toggle:hover {
@@ -145,7 +119,7 @@
   background: var(--color-gold-faint);
 }
 
-/* SVG icon inside toggle */
+/* SVG icons inside toggle */
 .theme-toggle svg {
   width: 14px;
   height: 14px;
@@ -153,6 +127,57 @@
   stroke: currentColor;
   stroke-width: 1.8;
   stroke-linecap: round;
+}
+
+/* --- Load ripple — liquid glass wave from toggle --- */
+
+@keyframes rippleExpand {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(12);
+    opacity: 0;
+  }
+}
+
+.load-ripple {
+  position: fixed;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+  filter: blur(18px);
+  background: radial-gradient(
+    circle,
+    transparent 0%,
+    rgba(74, 70, 64, 0.07) 8%,
+    transparent 16%,
+    rgba(74, 70, 64, 0.05) 24%,
+    transparent 32%,
+    rgba(74, 70, 64, 0.03) 40%,
+    transparent 50%,
+    rgba(74, 70, 64, 0.015) 60%,
+    transparent 70%
+  );
+  animation: rippleExpand 2.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[data-theme="dark"] .load-ripple {
+  background: radial-gradient(
+    circle,
+    transparent 0%,
+    rgba(201, 168, 76, 0.10) 8%,
+    transparent 16%,
+    rgba(201, 168, 76, 0.06) 24%,
+    transparent 32%,
+    rgba(201, 168, 76, 0.04) 40%,
+    transparent 50%,
+    rgba(201, 168, 76, 0.02) 60%,
+    transparent 70%
+  );
 }
 
 /* --- Reset & Base --- */

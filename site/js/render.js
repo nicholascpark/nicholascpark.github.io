@@ -114,11 +114,7 @@ function renderHeader(profile) {
   header.addEventListener('transitionend', function onReveal(e) {
     if (e.target !== header) return;
     header.removeEventListener('transitionend', onReveal);
-    typewrite(tagline, TAGLINE_TEXT, 40, function () {
-      // Reveal toggle with entrance animation + ripple
-      toggle.classList.remove('toggle-hidden');
-      setTimeout(function () { toggle.classList.add('ripple'); }, 50);
-    });
+    typewrite(tagline, TAGLINE_TEXT);
   });
 
   // Venture line — Zealot Analytics
@@ -172,22 +168,31 @@ function renderHeader(profile) {
   header.appendChild(links);
 
   // Theme toggle — aligned with the name, right side
-  var MOON_SVG = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-  var SUN_SVG = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
-
   const toggle = document.createElement('button');
   toggle.className = 'theme-toggle toggle-hidden';
   toggle.setAttribute('aria-label', 'Toggle dark mode');
-  toggle.innerHTML = isDarkMode() ? SUN_SVG : MOON_SVG;
+  setToggleIcon(toggle, isDarkMode());
   toggle.addEventListener('click', function () {
     var dark = document.documentElement.getAttribute('data-theme') === 'dark';
     var next = dark ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('theme', next);
-    toggle.innerHTML = next === 'dark' ? SUN_SVG : MOON_SVG;
+    setToggleIcon(toggle, next === 'dark');
     if (window.rebuildContentMask) window.rebuildContentMask();
   });
   header.appendChild(toggle);
+
+  // Entrance: toggle materializes → ripple emanates
+  header.addEventListener('transitionend', function onToggleReveal(e) {
+    if (e.target !== header) return;
+    header.removeEventListener('transitionend', onToggleReveal);
+    // Show toggle after a beat
+    setTimeout(function () {
+      toggle.classList.remove('toggle-hidden');
+      // Fire ripple from toggle's position
+      setTimeout(function () { spawnLoadRipple(toggle); }, 400);
+    }, 300);
+  });
   return header;
 }
 
@@ -321,7 +326,7 @@ function elText(tag, text, className) {
 
 /* --- Typewriter effect --- */
 
-function typewrite(el, text, speed, onComplete) {
+function typewrite(el, text, speed) {
   speed = speed || 40;
 
   // Accessibility: screen readers get the full text immediately
@@ -333,7 +338,6 @@ function typewrite(el, text, speed, onComplete) {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     el.textContent = text;
     el.classList.remove('typing');
-    if (onComplete) onComplete();
     return;
   }
 
@@ -342,10 +346,7 @@ function typewrite(el, text, speed, onComplete) {
     el.textContent = text.slice(0, ++i);
     if (i >= text.length) {
       clearInterval(interval);
-      setTimeout(function () {
-        el.classList.remove('typing');
-        if (onComplete) onComplete();
-      }, 1000);
+      setTimeout(function () { el.classList.remove('typing'); }, 1000);
     }
   }, speed);
 }
@@ -420,4 +421,36 @@ function initParallax() {
       ticking = false;
     });
   }, { passive: true });
+}
+
+/* --- Theme toggle icons (SVG) --- */
+
+function setToggleIcon(btn, isDark) {
+  if (isDark) {
+    // Sun icon
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"/></svg>';
+  } else {
+    // Crescent moon icon
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor" stroke="none" opacity="0.7"/><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  }
+}
+
+/* --- Load ripple — liquid glass wave from toggle --- */
+
+function spawnLoadRipple(toggle) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var rect = toggle.getBoundingClientRect();
+  var cx = rect.left + rect.width / 2;
+  var cy = rect.top + rect.height / 2;
+
+  var ripple = document.createElement('div');
+  ripple.className = 'load-ripple';
+  ripple.style.left = cx + 'px';
+  ripple.style.top = cy + 'px';
+  document.body.appendChild(ripple);
+
+  ripple.addEventListener('animationend', function () {
+    ripple.remove();
+  });
 }

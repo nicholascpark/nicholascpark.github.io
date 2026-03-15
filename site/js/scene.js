@@ -25,12 +25,12 @@
   const group = new THREE.Group();
   scene.add(group);
 
-  const geo = new THREE.DodecahedronGeometry(2.2, 0);
+  const geo = new THREE.DodecahedronGeometry(2.8, 0);
 
   // Wireframe edges — metallic silver
   const edgeGeo = new THREE.EdgesGeometry(geo);
   const edgeMat = new THREE.LineBasicMaterial({
-    color: 0xb0b8c4,
+    color: 0xc9a84c,
     transparent: true,
     opacity: 0.7,
   });
@@ -39,9 +39,9 @@
 
   // Transparent faces — faint silver fill
   const faceMat = new THREE.MeshBasicMaterial({
-    color: 0xc0c8d0,
+    color: 0xc9a84c,
     transparent: true,
-    opacity: 0.015,
+    opacity: 0.0075,
     side: THREE.DoubleSide,
   });
   const faceMesh = new THREE.Mesh(geo, faceMat);
@@ -96,10 +96,10 @@
   group.add(pentMesh);
 
   // Outer glow shell — slightly larger, very faint
-  const glowGeo = new THREE.DodecahedronGeometry(2.4, 0);
+  const glowGeo = new THREE.DodecahedronGeometry(3.0, 0);
   const glowEdgeGeo = new THREE.EdgesGeometry(glowGeo);
   const glowMat = new THREE.LineBasicMaterial({
-    color: 0x8890a0,
+    color: 0xc9a84c,
     transparent: true,
     opacity: 0.15,
   });
@@ -151,8 +151,8 @@
       linear-gradient(to right,
         rgba(0,0,0,1) 0%,
         rgba(0,0,0,1) ${leftEdge}%,
-        rgba(0,0,0,0.18) ${leftEdge + 3}%,
-        rgba(0,0,0,0.18) ${rightEdge - 3}%,
+        rgba(0,0,0,0.55) ${leftEdge + 3}%,
+        rgba(0,0,0,0.55) ${rightEdge - 3}%,
         rgba(0,0,0,1) ${rightEdge}%,
         rgba(0,0,0,1) 100%
       )`;

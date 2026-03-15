@@ -28,6 +28,10 @@
 
     // Scroll-triggered reveals
     initScrollReveals();
+    // Mouse proximity glow tracking
+    initMouseGlow(root);
+    // Subtle content parallax
+    initParallax();
   } catch (err) {
     console.error('Failed to render site:', err);
     root.innerHTML = '<p class="loading">Failed to load. Please try refreshing.</p>';
@@ -88,10 +92,18 @@ function renderHeader(profile) {
 
   header.appendChild(elText('h1', profile.name));
 
-  // Tagline
+  // Tagline — typed in after header reveals
+  const TAGLINE_TEXT = 'Software Engineer \u00b7 AI Agents \u00b7 Applied Cognition';
   const tagline = el('p', 'tagline');
-  tagline.textContent = 'Software Engineer \u00b7 AI Agents \u00b7 Applied Cognition';
+  tagline.setAttribute('aria-label', TAGLINE_TEXT);
   header.appendChild(tagline);
+
+  // Start typewriter after header reveal transition completes
+  header.addEventListener('transitionend', function onReveal(e) {
+    if (e.target !== header) return;
+    header.removeEventListener('transitionend', onReveal);
+    typewrite(tagline, TAGLINE_TEXT);
+  });
 
   // Venture line — Zealot Analytics
   if (profile.ventures && profile.ventures.length > 0) {
@@ -230,6 +242,24 @@ function renderFooter(profile) {
   const p = document.createElement('p');
   p.innerHTML = `&copy; ${new Date().getFullYear()} ${profile.name}`;
   footer.appendChild(p);
+
+  // Live dodecahedron rotation coordinates
+  const coords = el('p', 'footer-coords');
+  coords.textContent = '\u25CB x: 0.0\u00B0  y: 0.0\u00B0  z: 0.0\u00B0';
+  footer.appendChild(coords);
+
+  // Update coordinates from scene.js CSS custom properties
+  // Read from .style directly (not getComputedStyle) to avoid forced recalc
+  function updateCoords() {
+    var s = document.documentElement.style;
+    var rx = s.getPropertyValue('--dodeca-rx') || '0.0';
+    var ry = s.getPropertyValue('--dodeca-ry') || '0.0';
+    var rz = s.getPropertyValue('--dodeca-rz') || '0.0';
+    coords.textContent = '\u25CB x: ' + rx.trim() + '\u00B0  y: ' + ry.trim() + '\u00B0  z: ' + rz.trim() + '\u00B0';
+    requestAnimationFrame(updateCoords);
+  }
+  requestAnimationFrame(updateCoords);
+
   return footer;
 }
 
@@ -255,6 +285,33 @@ function elText(tag, text, className) {
   return element;
 }
 
+/* --- Typewriter effect --- */
+
+function typewrite(el, text, speed) {
+  speed = speed || 40;
+
+  // Accessibility: screen readers get the full text immediately
+  el.setAttribute('aria-label', text);
+  el.textContent = '';
+  el.classList.add('typing');
+
+  // Respect reduced motion preference
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    el.textContent = text;
+    el.classList.remove('typing');
+    return;
+  }
+
+  var i = 0;
+  var interval = setInterval(function () {
+    el.textContent = text.slice(0, ++i);
+    if (i >= text.length) {
+      clearInterval(interval);
+      setTimeout(function () { el.classList.remove('typing'); }, 1000);
+    }
+  }, speed);
+}
+
 /* --- Scroll-triggered reveals --- */
 
 function initScrollReveals() {
@@ -273,4 +330,41 @@ function initScrollReveals() {
   );
 
   revealEls.forEach((el) => observer.observe(el));
+}
+
+/* --- Mouse proximity glow --- */
+
+function initMouseGlow(root) {
+  if (window.matchMedia('(hover: none)').matches) return;
+
+  root.addEventListener('mousemove', function (e) {
+    // Coordinates must be relative to #root, not viewport,
+    // since the ::before pseudo-element is positioned relative to #root
+    var rect = root.getBoundingClientRect();
+    root.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');
+    root.style.setProperty('--mouse-y', (e.clientY - rect.top) + 'px');
+  });
+}
+
+/* --- Subtle content parallax --- */
+
+function initParallax() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var titles = document.querySelectorAll('.section-title');
+  var ticking = false;
+
+  window.addEventListener('scroll', function () {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      var vh = window.innerHeight;
+      titles.forEach(function (el) {
+        var rect = el.getBoundingClientRect();
+        var offset = (rect.top / vh - 0.5) * 8;
+        el.style.transform = 'translateY(' + offset.toFixed(1) + 'px)';
+      });
+      ticking = false;
+    });
+  }, { passive: true });
 }

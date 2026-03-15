@@ -27,19 +27,20 @@
 
   const geo = new THREE.DodecahedronGeometry(3.16, 0);
 
-  // Wireframe edges — metallic silver
+  // Wireframe edges — platinum (light) or gold (dark), set per frame
+  var initColor = document.documentElement.getAttribute('data-theme') === 'dark' ? 0xc9a84c : 0x4a4640;
   const edgeGeo = new THREE.EdgesGeometry(geo);
   const edgeMat = new THREE.LineBasicMaterial({
-    color: 0xc9a84c,
+    color: initColor,
     transparent: true,
     opacity: 0.7,
   });
   const wireframe = new THREE.LineSegments(edgeGeo, edgeMat);
   group.add(wireframe);
 
-  // Transparent faces — faint silver fill
+  // Transparent faces — faint fill
   const faceMat = new THREE.MeshBasicMaterial({
-    color: 0xc9a84c,
+    color: initColor,
     transparent: true,
     opacity: 0.0075,
     side: THREE.DoubleSide,
@@ -78,7 +79,7 @@
 
   const pentGeo = new THREE.ShapeGeometry(pentShape);
   const pentMat = new THREE.MeshBasicMaterial({
-    color: 0xc9a84c,
+    color: initColor,
     side: THREE.DoubleSide,
   });
 
@@ -251,6 +252,15 @@
 
     // Edge opacity pulse — metallic shimmer
     edgeMat.opacity = 0.6 + Math.sin(time * 0.3) * 0.15;
+
+    // Theme-reactive color: platinum on light, gold on dark
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var targetHex = isDark ? 0xc9a84c : 0x4a4640;
+    if (edgeMat.color.getHex() !== targetHex) {
+      edgeMat.color.setHex(targetHex);
+      faceMat.color.setHex(targetHex);
+      pentMat.color.setHex(targetHex);
+    }
 
     // --- Time bridge: export state to CSS custom properties ---
     var docStyle = document.documentElement.style;

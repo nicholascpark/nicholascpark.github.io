@@ -110,11 +110,13 @@ function renderHeader(profile) {
   tagline.setAttribute('aria-label', TAGLINE_TEXT);
   header.appendChild(tagline);
 
-  // Start typewriter after header reveal transition completes
+  // After header reveal: typewriter + toggle entrance + ripple
   header.addEventListener('transitionend', function onReveal(e) {
     if (e.target !== header) return;
     header.removeEventListener('transitionend', onReveal);
     typewrite(tagline, TAGLINE_TEXT);
+    toggle.classList.remove('toggle-hidden');
+    spawnLoadRipple(toggle);
   });
 
   // Venture line — Zealot Analytics
@@ -182,17 +184,6 @@ function renderHeader(profile) {
   });
   header.appendChild(toggle);
 
-  // Entrance: toggle materializes → ripple emanates
-  header.addEventListener('transitionend', function onToggleReveal(e) {
-    if (e.target !== header) return;
-    header.removeEventListener('transitionend', onToggleReveal);
-    // Show toggle after a beat
-    setTimeout(function () {
-      toggle.classList.remove('toggle-hidden');
-      // Fire ripple from toggle's position
-      setTimeout(function () { spawnLoadRipple(toggle); }, 400);
-    }, 300);
-  });
   return header;
 }
 

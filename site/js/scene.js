@@ -125,44 +125,81 @@
   });
 
   /* --- Content-aware opacity mask --- */
-  // Dynamically update canvas CSS mask so the dodecahedron fades
-  // behind content regions as the user scrolls
-  function updateContentMask() {
+  // Build a mask once in document-space (full page height).
+  // On scroll, just shift mask-position — no regeneration, no flicker.
+  const maskCanvas = document.createElement('canvas');
+  const maskCtx = maskCanvas.getContext('2d');
+  let prevMaskUrl = null;
+
+  const MASK_SELECTORS = '.site-header, .section-prose, .section-title, .interests-list li, .projects-list li, .venture-tag, .links-row, .site-footer p';
+
+  function buildContentMask() {
     const root = document.getElementById('root');
     if (!root) return;
 
-    const rootRect = root.getBoundingClientRect();
     const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const docH = document.documentElement.scrollHeight;
+    const scrollY = window.scrollY;
+    const scale = 0.3;
 
-    // Content column bounds as percentages of viewport width
-    const leftEdge = ((rootRect.left - 40) / vw) * 100;
-    const rightEdge = ((rootRect.right + 40) / vw) * 100;
+    maskCanvas.width = Math.round(vw * scale);
+    maskCanvas.height = Math.round(docH * scale);
+    const ctx = maskCtx;
 
-    // Vertical: fade where content is visible in viewport
-    const contentTop = Math.max(0, rootRect.top);
-    const contentBottom = Math.min(vh, rootRect.bottom);
-    const topPct = (contentTop / vh) * 100;
-    const bottomPct = (contentBottom / vh) * 100;
+    // Full opacity everywhere — dodecahedron visible
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
 
-    // Build a CSS mask: full opacity everywhere except a soft
-    // rectangle over the content area which is semi-transparent
-    canvas.style.maskImage = `
-      linear-gradient(to right,
-        rgba(0,0,0,1) 0%,
-        rgba(0,0,0,1) ${leftEdge}%,
-        rgba(0,0,0,0.55) ${leftEdge + 3}%,
-        rgba(0,0,0,0.55) ${rightEdge - 3}%,
-        rgba(0,0,0,1) ${rightEdge}%,
-        rgba(0,0,0,1) 100%
-      )`;
+    // Erase mode with blur for soft edges
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.filter = 'blur(' + Math.round(22 * scale) + 'px)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+
+    const els = root.querySelectorAll(MASK_SELECTORS);
+    const pad = 20;
+
+    els.forEach(function (el) {
+      // getBoundingClientRect is viewport-relative; add scrollY for document-space
+      var r = el.getBoundingClientRect();
+      ctx.fillRect(
+        (r.left - pad) * scale,
+        (r.top + scrollY - pad) * scale,
+        (r.width + pad * 2) * scale,
+        (r.height + pad * 2) * scale
+      );
+    });
+
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.filter = 'none';
+
+    // Sync data URL — no async flicker
+    var dataUrl = maskCanvas.toDataURL('image/png');
+
+    canvas.style.maskImage = 'url(' + dataUrl + ')';
     canvas.style.webkitMaskImage = canvas.style.maskImage;
+    canvas.style.maskSize = vw + 'px ' + docH + 'px';
+    canvas.style.webkitMaskSize = canvas.style.maskSize;
+    canvas.style.maskRepeat = 'no-repeat';
+    canvas.style.webkitMaskRepeat = 'no-repeat';
+
+    // Set initial scroll position
+    updateMaskScroll();
   }
 
-  window.addEventListener('scroll', updateContentMask);
-  window.addEventListener('resize', updateContentMask);
-  // Initial call after a short delay so DOM is ready
-  setTimeout(updateContentMask, 200);
+  function updateMaskScroll() {
+    var y = -window.scrollY;
+    canvas.style.maskPosition = '0px ' + y + 'px';
+    canvas.style.webkitMaskPosition = canvas.style.maskPosition;
+  }
+
+  // Scroll only shifts the mask — no rebuild, no flicker
+  window.addEventListener('scroll', updateMaskScroll, { passive: true });
+  // Rebuild mask on resize (layout changes)
+  window.addEventListener('resize', function () {
+    requestAnimationFrame(buildContentMask);
+  });
+  // Initial build after DOM settles
+  setTimeout(buildContentMask, 400);
 
   /* --- Resize --- */
   window.addEventListener('resize', () => {

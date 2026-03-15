@@ -9,9 +9,9 @@
   --color-bg:            #faf9f7;
   --color-bg-deep:       #f3f1ed;
 
-  /* Gold accents — muted for light theme */
-  --color-gold:          #a08540;
-  --color-gold-bright:   #c9a84c;
+  /* Platinum accents — monochrome light theme */
+  --color-gold:          #4a4640;
+  --color-gold-bright:   #3d3a34;
   --color-gold-dim:      #8a8578;
   --color-gold-faint:    rgba(74, 70, 64, 0.06);
 

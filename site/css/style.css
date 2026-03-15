@@ -66,7 +66,7 @@ body {
   z-index: 0 !important;
 }
 
-/* --- Main container — open, no boxes --- */
+/* --- Main container — open, no panel --- */
 
 #root {
   position: relative;
@@ -76,24 +76,44 @@ body {
   padding: calc(var(--spacing-unit) * 5) calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 3);
 }
 
-/* --- Fade-in animations --- */
+/* --- Scroll-reveal animations --- */
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger grid children */
+.reveal-stagger > * {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-stagger.revealed > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-stagger.revealed > *:nth-child(1) { transition-delay: 0s; }
+.reveal-stagger.revealed > *:nth-child(2) { transition-delay: 0.08s; }
+.reveal-stagger.revealed > *:nth-child(3) { transition-delay: 0.16s; }
+.reveal-stagger.revealed > *:nth-child(4) { transition-delay: 0.24s; }
+.reveal-stagger.revealed > *:nth-child(5) { transition-delay: 0.32s; }
+.reveal-stagger.revealed > *:nth-child(6) { transition-delay: 0.4s; }
 
 /* --- Header / Identity --- */
 
 .site-header {
   margin-bottom: calc(var(--spacing-unit) * 4);
-  animation: fadeIn 1s ease-out both;
 }
 
 .site-header h1 {
@@ -189,12 +209,7 @@ body {
 
 .section {
   margin-bottom: 0;
-  animation: fadeIn 0.8s ease-out both;
 }
-
-.section:nth-of-type(1) { animation-delay: 0.2s; }
-.section:nth-of-type(2) { animation-delay: 0.4s; }
-.section:nth-of-type(3) { animation-delay: 0.6s; }
 
 .section-title {
   font-family: var(--font-serif);
@@ -226,13 +241,16 @@ body {
 }
 
 .interests-list li {
-  padding-left: calc(var(--spacing-unit) * 0.8);
+  padding: calc(var(--spacing-unit) * 0.6) calc(var(--spacing-unit) * 0.8);
   border-left: 2px solid var(--color-border);
-  transition: border-color 0.3s ease;
+  border-radius: 0 8px 8px 0;
+  transition: border-color 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;
 }
 
 .interests-list li:hover {
   border-left-color: var(--color-gold);
+  background: rgba(160, 133, 64, 0.04);
+  box-shadow: -2px 0 16px rgba(160, 133, 64, 0.08);
 }
 
 .interest-name {
@@ -268,11 +286,15 @@ body {
 }
 
 .projects-list li {
-  transition: transform 0.3s ease;
+  padding: calc(var(--spacing-unit) * 0.6) calc(var(--spacing-unit) * 0.5);
+  border-radius: 8px;
+  transition: transform 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;
 }
 
 .projects-list li:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  background: rgba(160, 133, 64, 0.03);
+  box-shadow: 0 6px 24px rgba(160, 133, 64, 0.07);
 }
 
 .project-name {
@@ -306,7 +328,6 @@ body {
   margin-top: calc(var(--spacing-unit) * 4);
   padding-top: calc(var(--spacing-unit) * 1.5);
   border-top: 1px solid var(--color-border);
-  animation: fadeIn 0.8s ease-out 0.8s both;
 }
 
 .site-footer p {

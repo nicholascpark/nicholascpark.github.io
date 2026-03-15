@@ -25,6 +25,9 @@
     root.appendChild(createSacredDivider());
     root.appendChild(wrapGlass(renderProjects(projects)));
     root.appendChild(renderFooter(profile));
+
+    // Scroll-triggered reveals
+    initScrollReveals();
   } catch (err) {
     console.error('Failed to render site:', err);
     root.innerHTML = '<p class="loading">Failed to load. Please try refreshing.</p>';
@@ -43,7 +46,7 @@ async function fetchYAML(path) {
 /* --- Sacred geometry divider --- */
 
 function createSacredDivider() {
-  const divider = el('div', 'section-divider');
+  const divider = el('div', 'section-divider reveal');
 
   // Small sacred geometry symbol — a simplified Seed of Life / hexagram
   const svgNS = 'http://www.w3.org/2000/svg';
@@ -81,7 +84,7 @@ function createSacredDivider() {
 /* --- Render functions --- */
 
 function renderHeader(profile) {
-  const header = el('header', 'site-header');
+  const header = el('header', 'site-header reveal');
 
   header.appendChild(elText('h1', profile.name));
 
@@ -143,7 +146,7 @@ function renderHeader(profile) {
 }
 
 function renderAbout() {
-  const section = el('section', 'section');
+  const section = el('section', 'section reveal');
 
   section.appendChild(elText('h2', 'About', 'section-title'));
 
@@ -167,10 +170,10 @@ function renderAbout() {
 }
 
 function renderInterests(data) {
-  const section = el('section', 'section');
+  const section = el('section', 'section reveal');
   section.appendChild(elText('h2', 'Interests', 'section-title'));
 
-  const list = el('ul', 'interests-list');
+  const list = el('ul', 'interests-list reveal-stagger');
 
   data.interests.forEach((interest) => {
     const li = document.createElement('li');
@@ -194,10 +197,10 @@ function renderInterests(data) {
 }
 
 function renderProjects(data) {
-  const section = el('section', 'section');
+  const section = el('section', 'section reveal');
   section.appendChild(elText('h2', 'Selected Work', 'section-title'));
 
-  const list = el('ul', 'projects-list');
+  const list = el('ul', 'projects-list reveal-stagger');
 
   data.featured.forEach((project) => {
     const li = document.createElement('li');
@@ -223,7 +226,7 @@ function renderProjects(data) {
 }
 
 function renderFooter(profile) {
-  const footer = el('footer', 'site-footer');
+  const footer = el('footer', 'site-footer reveal');
   const p = document.createElement('p');
   p.innerHTML = `&copy; ${new Date().getFullYear()} ${profile.name}`;
   footer.appendChild(p);
@@ -250,4 +253,24 @@ function elText(tag, text, className) {
   const element = el(tag, className);
   element.textContent = text;
   return element;
+}
+
+/* --- Scroll-triggered reveals --- */
+
+function initScrollReveals() {
+  const revealEls = document.querySelectorAll('.reveal, .reveal-stagger');
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+  );
+
+  revealEls.forEach((el) => observer.observe(el));
 }

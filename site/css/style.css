@@ -9,9 +9,9 @@
   --color-bg:            #faf9f7;
   --color-bg-deep:       #f3f1ed;
 
-  /* Platinum accents — monochrome light theme */
-  --color-gold:          #4a4640;
-  --color-gold-bright:   #3d3a34;
+  /* Gold accents — muted for light theme */
+  --color-gold:          #a08540;
+  --color-gold-bright:   #c9a84c;
   --color-gold-dim:      #8a8578;
   --color-gold-faint:    rgba(74, 70, 64, 0.06);
 
@@ -90,11 +90,11 @@
   background: none;
   border: 1px solid var(--color-border-strong);
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   cursor: pointer;
   color: var(--color-text-muted);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
   justify-content: center;

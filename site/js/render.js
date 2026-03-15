@@ -8,6 +8,7 @@
 /* --- Theme detection --- */
 
 function isDarkMode() {
+  // Default to light — only dark if explicitly chosen
   return localStorage.getItem('theme') === 'dark';
 }
 

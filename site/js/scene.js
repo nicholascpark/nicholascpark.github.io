@@ -25,7 +25,7 @@
   const group = new THREE.Group();
   scene.add(group);
 
-  const geo = new THREE.DodecahedronGeometry(2.8, 0);
+  const geo = new THREE.DodecahedronGeometry(3.16, 0);
 
   // Wireframe edges — metallic silver
   const edgeGeo = new THREE.EdgesGeometry(geo);
@@ -95,16 +95,6 @@
   // Pentagon meshes always face camera — updated in animation loop
   group.add(pentMesh);
 
-  // Outer glow shell — slightly larger, very faint
-  const glowGeo = new THREE.DodecahedronGeometry(3.0, 0);
-  const glowEdgeGeo = new THREE.EdgesGeometry(glowGeo);
-  const glowMat = new THREE.LineBasicMaterial({
-    color: 0xc9a84c,
-    transparent: true,
-    opacity: 0.15,
-  });
-  const glowWireframe = new THREE.LineSegments(glowEdgeGeo, glowMat);
-  group.add(glowWireframe);
 
   /* --- Mouse tracking for parallax --- */
   let mouseX = 0;
@@ -200,6 +190,10 @@
   });
   // Initial build after DOM settles
   setTimeout(buildContentMask, 400);
+  // Expose for theme toggle to trigger rebuild
+  window.rebuildContentMask = function () {
+    setTimeout(buildContentMask, 50);
+  };
 
   /* --- Resize --- */
   window.addEventListener('resize', () => {
@@ -235,8 +229,8 @@
       // Depth-based scaling: front vertices larger, rear smaller
       var depthZ = dummy.position.z;
       var depthScale = THREE.MathUtils.clamp(
-        THREE.MathUtils.mapLinear(depthZ, -3, 3, 0.4, 1.8),
-        0.4, 1.8
+        THREE.MathUtils.mapLinear(depthZ, -3.5, 3.5, 0.6, 1.3),
+        0.6, 1.3
       );
 
       // We need position in group-local space for the InstancedMesh
@@ -250,16 +244,17 @@
     });
     pentMesh.instanceMatrix.needsUpdate = true;
 
-    // Subtle breathing scale
-    const breathe = 1 + Math.sin(time * 0.5) * 0.015;
-    group.scale.setScalar(breathe);
+    // Human breathing via breathe.js — 10s cycle, inhale 50% faster than exhale
+    var breatheEased = breathe(time / 0.6); // convert animation-time to real seconds
+    var breatheScale = 1 + (breatheEased * 2 - 1) * 0.035;
+    group.scale.setScalar(breatheScale);
 
     // Edge opacity pulse — metallic shimmer
     edgeMat.opacity = 0.6 + Math.sin(time * 0.3) * 0.15;
 
     // --- Time bridge: export state to CSS custom properties ---
     var docStyle = document.documentElement.style;
-    docStyle.setProperty('--dodeca-breathe', (Math.sin(time * 0.5) * 0.5 + 0.5).toFixed(3));
+    docStyle.setProperty('--dodeca-breathe', breatheEased.toFixed(3));
     docStyle.setProperty('--dodeca-rx', ((group.rotation.x * 180 / Math.PI) % 360).toFixed(1));
     docStyle.setProperty('--dodeca-ry', ((group.rotation.y * 180 / Math.PI) % 360).toFixed(1));
     docStyle.setProperty('--dodeca-rz', ((group.rotation.z * 180 / Math.PI) % 360).toFixed(1));

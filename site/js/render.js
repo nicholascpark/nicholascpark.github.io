@@ -5,6 +5,19 @@
  * Dependencies: js-yaml (loaded via CDN in index.html)
  */
 
+/* --- Theme detection --- */
+
+function isDarkMode() {
+  var stored = localStorage.getItem('theme');
+  if (stored) return stored === 'dark';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+// Apply theme immediately to avoid flash
+if (isDarkMode()) {
+  document.documentElement.setAttribute('data-theme', 'dark');
+}
+
 (async function () {
   const root = document.getElementById('root');
   root.innerHTML = '<p class="loading">Loading...</p>';
@@ -29,7 +42,7 @@
     // Scroll-triggered reveals
     initScrollReveals();
     // Mouse proximity glow tracking
-    initMouseGlow(root);
+    initMouseGlow();
     // Subtle content parallax
     initParallax();
   } catch (err) {
@@ -152,6 +165,22 @@ function renderHeader(profile) {
     }
     links.appendChild(a);
   });
+
+  // Theme toggle
+  const toggle = document.createElement('button');
+  toggle.className = 'theme-toggle';
+  toggle.setAttribute('aria-label', 'Toggle dark mode');
+  toggle.textContent = isDarkMode() ? '\u263C' : '\u263E'; // ☼ or ☾
+  toggle.addEventListener('click', function () {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var next = dark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    toggle.textContent = next === 'dark' ? '\u263C' : '\u263E';
+    // Rebuild content mask for new background
+    if (window.rebuildContentMask) window.rebuildContentMask();
+  });
+  links.appendChild(toggle);
 
   header.appendChild(links);
   return header;
@@ -332,17 +361,32 @@ function initScrollReveals() {
   revealEls.forEach((el) => observer.observe(el));
 }
 
-/* --- Mouse proximity glow --- */
+/* --- Mouse proximity glow + click gleam --- */
 
-function initMouseGlow(root) {
+function initMouseGlow() {
   if (window.matchMedia('(hover: none)').matches) return;
 
-  root.addEventListener('mousemove', function (e) {
-    // Coordinates must be relative to #root, not viewport,
-    // since the ::before pseudo-element is positioned relative to #root
-    var rect = root.getBoundingClientRect();
-    root.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');
-    root.style.setProperty('--mouse-y', (e.clientY - rect.top) + 'px');
+  // Create viewport-wide glow overlay
+  var glow = document.createElement('div');
+  glow.id = 'cursor-glow';
+  document.body.appendChild(glow);
+
+  // Track cursor — viewport coordinates (fixed positioning)
+  document.addEventListener('mousemove', function (e) {
+    glow.style.setProperty('--mouse-x', e.clientX + 'px');
+    glow.style.setProperty('--mouse-y', e.clientY + 'px');
+  });
+
+  // Click gleam — radial pulse from click point
+  document.addEventListener('click', function (e) {
+    var gleam = document.createElement('div');
+    gleam.className = 'click-gleam';
+    gleam.style.left = e.clientX + 'px';
+    gleam.style.top = e.clientY + 'px';
+    document.body.appendChild(gleam);
+    gleam.addEventListener('animationend', function () {
+      gleam.remove();
+    });
   });
 }
 

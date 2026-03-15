@@ -88,7 +88,7 @@
 
 .theme-toggle {
   background: none;
-  border: 1px solid var(--color-border-strong);
+  border: 1.5px solid var(--color-border-strong);
   border-radius: 50%;
   width: 28px;
   height: 28px;
@@ -101,6 +101,9 @@
   transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
   flex-shrink: 0;
   line-height: 1;
+  position: absolute;
+  right: 0;
+  top: 0;
 }
 
 .theme-toggle:hover {
@@ -240,6 +243,7 @@ body {
 
 .site-header {
   margin-bottom: calc(var(--spacing-unit) * 4);
+  position: relative;
 }
 
 .site-header h1 {

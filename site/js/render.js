@@ -165,7 +165,9 @@ function renderHeader(profile) {
     links.appendChild(a);
   });
 
-  // Theme toggle
+  header.appendChild(links);
+
+  // Theme toggle — aligned with the name, right side
   const toggle = document.createElement('button');
   toggle.className = 'theme-toggle';
   toggle.setAttribute('aria-label', 'Toggle dark mode');
@@ -176,12 +178,9 @@ function renderHeader(profile) {
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('theme', next);
     toggle.textContent = next === 'dark' ? '\u263C' : '\u263E';
-    // Rebuild content mask for new background
     if (window.rebuildContentMask) window.rebuildContentMask();
   });
-  links.appendChild(toggle);
-
-  header.appendChild(links);
+  header.appendChild(toggle);
   return header;
 }
 

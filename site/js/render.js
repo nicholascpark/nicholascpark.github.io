@@ -17,14 +17,17 @@
     ]);
 
     root.innerHTML = '';
-    root.appendChild(renderHeader(profile));
-    root.appendChild(renderAbout());
-    root.appendChild(renderInterests(interests));
-    root.appendChild(renderProjects(projects));
+    root.appendChild(wrapGlass(renderHeader(profile), 'glass-card-header'));
+    root.appendChild(createSacredDivider());
+    root.appendChild(wrapGlass(renderAbout()));
+    root.appendChild(createSacredDivider());
+    root.appendChild(wrapGlass(renderInterests(interests)));
+    root.appendChild(createSacredDivider());
+    root.appendChild(wrapGlass(renderProjects(projects)));
     root.appendChild(renderFooter(profile));
   } catch (err) {
     console.error('Failed to render site:', err);
-    root.innerHTML = '<p>Failed to load. Please try refreshing.</p>';
+    root.innerHTML = '<p class="loading">Failed to load. Please try refreshing.</p>';
   }
 })();
 
@@ -37,6 +40,44 @@ async function fetchYAML(path) {
   return jsyaml.load(text);
 }
 
+/* --- Sacred geometry divider --- */
+
+function createSacredDivider() {
+  const divider = el('div', 'section-divider');
+
+  // Small sacred geometry symbol — a simplified Seed of Life / hexagram
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('width', '20');
+  svg.setAttribute('height', '20');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', '#a08540');
+  svg.setAttribute('stroke-width', '0.8');
+
+  // Central circle
+  const c1 = document.createElementNS(svgNS, 'circle');
+  c1.setAttribute('cx', '12');
+  c1.setAttribute('cy', '12');
+  c1.setAttribute('r', '4');
+  svg.appendChild(c1);
+
+  // Outer ring
+  const c2 = document.createElementNS(svgNS, 'circle');
+  c2.setAttribute('cx', '12');
+  c2.setAttribute('cy', '12');
+  c2.setAttribute('r', '9');
+  svg.appendChild(c2);
+
+  // Diamond / rotated square inside
+  const diamond = document.createElementNS(svgNS, 'polygon');
+  diamond.setAttribute('points', '12,3 21,12 12,21 3,12');
+  svg.appendChild(diamond);
+
+  divider.appendChild(svg);
+  return divider;
+}
+
 /* --- Render functions --- */
 
 function renderHeader(profile) {
@@ -44,12 +85,12 @@ function renderHeader(profile) {
 
   header.appendChild(elText('h1', profile.name));
 
-  // Tagline — built from positioning, not stored as a field
+  // Tagline
   const tagline = el('p', 'tagline');
   tagline.textContent = 'Software Engineer \u00b7 AI Agents \u00b7 Applied Cognition';
   header.appendChild(tagline);
 
-  // Venture line — Zealot Analytics, subtle
+  // Venture line — Zealot Analytics
   if (profile.ventures && profile.ventures.length > 0) {
     const venture = profile.ventures[0];
     const vtag = el('p', 'venture-tag');
@@ -187,6 +228,14 @@ function renderFooter(profile) {
   p.innerHTML = `&copy; ${new Date().getFullYear()} ${profile.name}`;
   footer.appendChild(p);
   return footer;
+}
+
+/* --- Glass card wrapper --- */
+
+function wrapGlass(content, className) {
+  const card = el('div', className || 'glass-card');
+  card.appendChild(content);
+  return card;
 }
 
 /* --- Utilities --- */

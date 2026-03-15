@@ -8,9 +8,7 @@
 /* --- Theme detection --- */
 
 function isDarkMode() {
-  var stored = localStorage.getItem('theme');
-  if (stored) return stored === 'dark';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return localStorage.getItem('theme') === 'dark';
 }
 
 // Apply theme immediately to avoid flash

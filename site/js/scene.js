@@ -252,6 +252,13 @@
     // Edge opacity pulse — metallic shimmer
     edgeMat.opacity = 0.6 + Math.sin(time * 0.3) * 0.15;
 
+    // --- Time bridge: export state to CSS custom properties ---
+    var docStyle = document.documentElement.style;
+    docStyle.setProperty('--dodeca-breathe', (Math.sin(time * 0.5) * 0.5 + 0.5).toFixed(3));
+    docStyle.setProperty('--dodeca-rx', ((group.rotation.x * 180 / Math.PI) % 360).toFixed(1));
+    docStyle.setProperty('--dodeca-ry', ((group.rotation.y * 180 / Math.PI) % 360).toFixed(1));
+    docStyle.setProperty('--dodeca-rz', ((group.rotation.z * 180 / Math.PI) % 360).toFixed(1));
+
     renderer.render(scene, camera);
   }
 

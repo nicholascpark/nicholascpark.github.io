@@ -60,10 +60,10 @@
 
 [data-theme="dark"] #cursor-glow {
   background: radial-gradient(
-    300px at var(--mouse-x, -300px) var(--mouse-y, -300px),
-    rgba(201, 168, 76, 0.14),
-    rgba(201, 168, 76, 0.04) 40%,
-    transparent
+    180px at var(--mouse-x, -300px) var(--mouse-y, -300px),
+    rgba(201, 168, 76, 0.18),
+    rgba(201, 168, 76, 0.05) 25%,
+    transparent 70%
   );
 }
 
@@ -230,10 +230,10 @@ body {
   pointer-events: none;
   z-index: 1;
   background: radial-gradient(
-    300px at var(--mouse-x, -300px) var(--mouse-y, -300px),
-    rgba(74, 70, 64, 0.10),
-    rgba(74, 70, 64, 0.03) 40%,
-    transparent
+    180px at var(--mouse-x, -300px) var(--mouse-y, -300px),
+    rgba(74, 70, 64, 0.14),
+    rgba(74, 70, 64, 0.04) 25%,
+    transparent 70%
   );
   transition: opacity 0.3s ease;
 }
@@ -452,6 +452,10 @@ body {
   line-height: 1.9;
   color: var(--color-text);
   max-width: 620px;
+  /* Gentle living text — opacity and spacing breathe with the dodecahedron */
+  opacity: calc(0.88 + var(--dodeca-breathe, 0) * 0.12);
+  letter-spacing: calc(0.005em + var(--dodeca-breathe, 0) * 0.008em);
+  word-spacing: calc(0.01em + var(--dodeca-breathe, 0) * 0.04em);
 }
 
 .section-prose p {
@@ -501,6 +505,7 @@ body {
   font-size: 0.85rem;
   color: var(--color-text-muted);
   line-height: 1.65;
+  opacity: calc(0.85 + var(--dodeca-breathe, 0) * 0.15);
 }
 
 /* --- Projects — open, airy --- */
@@ -547,6 +552,7 @@ body {
   font-size: 0.85rem;
   color: var(--color-text-muted);
   line-height: 1.6;
+  opacity: calc(0.85 + var(--dodeca-breathe, 0) * 0.15);
 }
 
 /* --- Footer --- */

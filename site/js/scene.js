@@ -247,7 +247,7 @@
 
     // Human breathing via breathe.js — 10s cycle, inhale 50% faster than exhale
     var breatheEased = breathe(time / 0.6); // convert animation-time to real seconds
-    var breatheScale = 1 + (breatheEased * 2 - 1) * 0.035;
+    var breatheScale = 1 + (breatheEased * 2 - 1) * 0.04;
     group.scale.setScalar(breatheScale);
 
     // Edge opacity pulse — metallic shimmer

@@ -1,6 +1,6 @@
 /**
- * Site renderer — reads YAML data from identity/ and content/,
- * renders the page into #root.
+ * Site renderer — reads nicholas.yaml (source of truth) and
+ * outputs/site-content.yaml (generated prose), renders the page into #root.
  *
  * Dependencies: js-yaml (loaded via CDN in index.html)
  */
@@ -22,21 +22,20 @@ if (isDarkMode()) {
   root.innerHTML = '<p class="loading">Loading...</p>';
 
   try {
-    const [profile, interests, projects] = await Promise.all([
-      fetchYAML('identity/profile.yaml'),
-      fetchYAML('content/interests.yaml'),
-      fetchYAML('content/projects.yaml'),
+    const [nicholas, siteContent] = await Promise.all([
+      fetchYAML('nicholas.yaml'),
+      fetchYAML('outputs/site-content.yaml'),
     ]);
 
     root.innerHTML = '';
-    root.appendChild(wrapGlass(renderHeader(profile), 'glass-card-header'));
+    root.appendChild(wrapGlass(renderHeader(nicholas), 'glass-card-header'));
     root.appendChild(createSacredDivider());
-    root.appendChild(wrapGlass(renderAbout()));
+    root.appendChild(wrapGlass(renderAbout(siteContent)));
     root.appendChild(createSacredDivider());
-    root.appendChild(wrapGlass(renderInterests(interests)));
+    root.appendChild(wrapGlass(renderInterests(nicholas)));
     root.appendChild(createSacredDivider());
-    root.appendChild(wrapGlass(renderProjects(projects)));
-    root.appendChild(renderFooter(profile));
+    root.appendChild(wrapGlass(renderProjects(nicholas)));
+    root.appendChild(renderFooter(nicholas));
 
     // Scroll-triggered reveals
     initScrollReveals();
@@ -187,37 +186,29 @@ function renderHeader(profile) {
   return header;
 }
 
-function renderAbout() {
+function renderAbout(siteContent) {
   const section = el('section', 'section reveal');
 
   section.appendChild(elText('h2', 'About', 'section-title'));
 
   const prose = el('div', 'section-prose');
-  const p1 = document.createElement('p');
-  p1.textContent = 'I build intelligent systems and think about how they learn. ' +
-    'My work sits at the intersection of software engineering, reinforcement learning, ' +
-    'and multi-agent AI \u2014 grounded in nine years of building production systems ' +
-    'and a graduate research foundation from Georgia Tech.';
-  prose.appendChild(p1);
-
-  const p2 = document.createElement('p');
-  p2.textContent = 'Lately, I\u2019m drawn to the harder questions: how agents coordinate, ' +
-    'how humans think about thinking, and what subtraction can teach us about cognition. ' +
-    'The through-line is a belief that rigorous thinking and practical building aren\u2019t ' +
-    'separate pursuits \u2014 they\u2019re the same one.';
-  prose.appendChild(p2);
+  siteContent.about.forEach(function (text) {
+    const p = document.createElement('p');
+    p.textContent = text.trim();
+    prose.appendChild(p);
+  });
 
   section.appendChild(prose);
   return section;
 }
 
-function renderInterests(data) {
+function renderInterests(nicholas) {
   const section = el('section', 'section reveal');
   section.appendChild(elText('h2', 'Interests', 'section-title'));
 
   const list = el('ul', 'interests-list reveal-stagger');
 
-  data.interests.forEach((interest) => {
+  nicholas.interests.forEach((interest) => {
     const li = document.createElement('li');
 
     const name = el('div', 'interest-name');
@@ -238,13 +229,13 @@ function renderInterests(data) {
   return section;
 }
 
-function renderProjects(data) {
+function renderProjects(nicholas) {
   const section = el('section', 'section reveal');
   section.appendChild(elText('h2', 'Selected Work', 'section-title'));
 
   const list = el('ul', 'projects-list reveal-stagger');
 
-  data.featured.forEach((project) => {
+  nicholas.projects.featured.forEach((project) => {
     const li = document.createElement('li');
 
     const name = el('div', 'project-name');

@@ -1,0 +1,33 @@
+#!/bin/bash
+# Post-commit hook: regenerate outputs when source files change.
+# Uses Claude Code CLI (Max subscription) — no API key needed.
+#
+# Install: git config core.hooksPath .githooks
+
+# Prevent infinite loop — skip if this is an auto-generated commit
+LAST_MSG=$(git log -1 --pretty=%s)
+if [[ "$LAST_MSG" == *"[auto-generate]"* ]]; then
+    exit 0
+fi
+
+# Check if any source files changed in this commit
+CHANGED=$(git diff-tree --no-commit-id --name-only -r HEAD -- nicholas.yaml identity/voice.md identity/positioning.md)
+if [ -z "$CHANGED" ]; then
+    exit 0
+fi
+
+echo "Source files changed — regenerating outputs..."
+
+# Run generate.py
+if python generate.py; then
+    # Check if outputs actually changed
+    if ! git diff --quiet outputs/; then
+        git add outputs/
+        git commit -m "chore: regenerate outputs [auto-generate]"
+        echo "Outputs regenerated and committed."
+    else
+        echo "Outputs unchanged."
+    fi
+else
+    echo "Warning: generate.py failed. Outputs not updated." >&2
+fi

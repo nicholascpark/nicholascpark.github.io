@@ -1,1 +1,1 @@
-Senior AI/ML Engineer building reinforcement learning and multi-agent systems, with a background in actuarial mathematics and a persistent interest in how intelligent systems — artificial and human — actually learn. I run Zealot Analytics for applied AI consulting and spend my research time exploring cognition through subtraction.
+Senior AI/ML Engineer building reinforcement learning and multi-agent systems, founder of Zealot Analytics. I study how competing pressures between agents sharpen intelligence — and I ship what I learn.

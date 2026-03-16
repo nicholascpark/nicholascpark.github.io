@@ -1,0 +1,15 @@
+# Auto-generated from nicholas.yaml + voice.md + positioning.md
+# Do not edit directly — regenerate with: python generate.py
+# (Until generate.py exists, this file is maintained manually)
+
+about:
+  - >
+    I build intelligent systems and think about how they learn.
+    My work sits at the intersection of software engineering, reinforcement learning,
+    and multi-agent AI — grounded in nine years of building production systems
+    and a graduate research foundation from Georgia Tech.
+  - >
+    Lately, I'm drawn to the harder questions: how agents coordinate,
+    how humans think about thinking, and what subtraction can teach us about cognition.
+    The through-line is a belief that rigorous thinking and practical building aren't
+    separate pursuits — they're the same one.

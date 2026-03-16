@@ -5,16 +5,23 @@ Reads nicholas.yaml + identity/voice.md + identity/positioning.md,
 calls an LLM to generate text artifacts, writes to outputs/.
 
 Usage:
-    python generate.py                          # generate all artifacts
+    python generate.py                          # generate all (auto-detects provider)
     python generate.py --only site-content      # generate one
     python generate.py --only bio-short,bio-long  # comma-separated subset
-    python generate.py --provider openai        # override default provider
+    python generate.py --provider anthropic     # use API key instead of Claude Code CLI
     python generate.py --dry-run                # print prompts without calling LLM
+
+Provider auto-detection priority:
+    1. claude-code CLI (uses Max subscription, no API key needed)
+    2. anthropic API (requires ANTHROPIC_API_KEY)
+    3. openai API (requires OPENAI_API_KEY)
 """
 
 import argparse
 import os
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -26,6 +33,27 @@ MODELS = {
     "anthropic": os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-20250514"),
     "openai": os.environ.get("OPENAI_MODEL", "gpt-4o"),
 }
+
+
+def detect_provider():
+    """Auto-detect the best available provider.
+
+    Priority: claude-code CLI (Max subscription) → anthropic API → error.
+    """
+    if shutil.which("claude"):
+        return "claude-code"
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        return "anthropic"
+    if os.environ.get("OPENAI_API_KEY"):
+        return "openai"
+    print(
+        "Error: no LLM provider available.\n"
+        "  - Install Claude Code CLI (uses Max subscription): https://docs.anthropic.com/en/docs/claude-code\n"
+        "  - Or set ANTHROPIC_API_KEY for API access\n"
+        "  - Or set OPENAI_API_KEY for OpenAI fallback",
+        file=sys.stderr,
+    )
+    sys.exit(1)
 
 SITE_CONTENT_HEADER = (
     "# Auto-generated from nicholas.yaml + voice.md + positioning.md\n"
@@ -52,10 +80,24 @@ def load_sources():
 
 def get_client(provider):
     """Return an LLM call function for the given provider."""
-    model = MODELS[provider]
-    if provider == "anthropic":
+    if provider == "claude-code":
+        # Uses Claude Code CLI — powered by Max subscription, no API key needed
+        def call(system, user):
+            prompt = f"{system}\n\n---\n\n{user}"
+            result = subprocess.run(
+                ["claude", "-p", prompt],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"claude CLI failed: {result.stderr.strip()}")
+            return result.stdout
+        return call
+    elif provider == "anthropic":
         from anthropic import Anthropic
 
+        model = MODELS["anthropic"]
         client = Anthropic()
 
         def call(system, user):
@@ -71,6 +113,7 @@ def get_client(provider):
     elif provider == "openai":
         from openai import OpenAI
 
+        model = MODELS["openai"]
         client = OpenAI()
 
         def call(system, user):
@@ -204,17 +247,99 @@ def generate_site_content(nicholas, voice, positioning, call_llm):
 
 def generate_bio_short(nicholas, voice, positioning, call_llm):
     """Generate 1-2 sentence bio."""
-    raise NotImplementedError("Task 4")
+    instruction = (
+        "Write a 1-2 sentence professional bio. Plain text, no markdown, no formatting. "
+        "First person. This is for email signatures, conference badges, and social profiles."
+    )
+    system = build_system_prompt(voice, positioning, instruction)
+
+    about = nicholas.get("about", {})
+    ventures = nicholas.get("ventures", [])
+    current = nicholas["experience"][0] if nicholas.get("experience") else {}
+    user = (
+        f"Themes: {yaml.dump(about.get('themes', []), default_flow_style=True).strip()}\n"
+        f"Through-line: {about.get('through_line', '')}\n"
+        f"Current role: {current.get('role', '')} @ {current.get('company', '')}\n"
+        f"Venture: {ventures[0]['name'] if ventures else 'N/A'} — {ventures[0].get('focus', '') if ventures else ''}"
+    )
+
+    if call_llm is None:
+        print(f"  [dry-run] System prompt ({len(system)} chars)")
+        print(f"  [dry-run] User prompt ({len(user)} chars)")
+        return "outputs/bio-short.md", "[dry-run placeholder]"
+
+    result = call_llm(system, user)
+    return "outputs/bio-short.md", result.strip() + "\n"
 
 
 def generate_bio_long(nicholas, voice, positioning, call_llm):
-    """Generate full paragraph bio."""
-    raise NotImplementedError("Task 5")
+    """Generate full paragraph bio for speaker pages / consulting."""
+    instruction = (
+        "Write a full paragraph professional bio for speaker pages or consulting profiles. "
+        "4-6 sentences. Third person (use 'Nicholas' or 'Park'). No markdown formatting."
+    )
+    system = build_system_prompt(voice, positioning, instruction)
+
+    about = nicholas.get("about", {})
+    ventures = nicholas.get("ventures", [])
+    user = (
+        f"Themes: {yaml.dump(about.get('themes', []), default_flow_style=True).strip()}\n"
+        f"Through-line: {about.get('through_line', '')}\n"
+        f"Background facts: {yaml.dump(about.get('background_facts', []), default_flow_style=True).strip()}\n\n"
+        f"Education:\n{format_education_summary(nicholas)}\n\n"
+        f"Experience:\n{format_experience_summary(nicholas)}\n\n"
+        f"Venture: {ventures[0]['name'] if ventures else 'N/A'} — {ventures[0].get('focus', '') if ventures else ''}\n\n"
+        f"Research:\n"
+    )
+    for r in nicholas.get("research", []):
+        user += f"- {r['name']}: {r.get('description', '').strip()}\n"
+
+    if call_llm is None:
+        print(f"  [dry-run] System prompt ({len(system)} chars)")
+        print(f"  [dry-run] User prompt ({len(user)} chars)")
+        return "outputs/bio-long.md", "[dry-run placeholder]"
+
+    result = call_llm(system, user)
+    return "outputs/bio-long.md", result.strip() + "\n"
 
 
 def generate_linkedin_draft(nicholas, voice, positioning, call_llm):
     """Generate LinkedIn About section draft."""
-    raise NotImplementedError("Task 6")
+    instruction = (
+        "Write a LinkedIn About section. First person. 3-4 short paragraphs. "
+        "No hashtags, no emoji, no markdown formatting. "
+        "Optimize for the 'business audience' guidance in the positioning strategy. "
+        "This is a draft — the user will review before posting."
+    )
+    system = build_system_prompt(voice, positioning, instruction)
+
+    about = nicholas.get("about", {})
+    ventures = nicholas.get("ventures", [])
+    skills = nicholas.get("skills", {})
+    user = (
+        f"Themes: {yaml.dump(about.get('themes', []), default_flow_style=True).strip()}\n"
+        f"Through-line: {about.get('through_line', '')}\n"
+        f"Background facts: {yaml.dump(about.get('background_facts', []), default_flow_style=True).strip()}\n\n"
+        f"Experience:\n{format_experience_summary(nicholas)}\n\n"
+        f"Skills:\n"
+    )
+    for category, items in skills.items():
+        if isinstance(items, list):
+            user += f"- {category}: {', '.join(items[:8])}\n"
+
+    user += (
+        f"\nVenture: {ventures[0]['name'] if ventures else 'N/A'} — "
+        f"{ventures[0].get('focus', '') if ventures else ''}"
+    )
+
+    if call_llm is None:
+        print(f"  [dry-run] System prompt ({len(system)} chars)")
+        print(f"  [dry-run] User prompt ({len(user)} chars)")
+        return "outputs/linkedin-draft.md", "[dry-run placeholder]"
+
+    result = call_llm(system, user)
+    header = "<!-- Draft generated from nicholas.yaml — review before posting -->\n\n"
+    return "outputs/linkedin-draft.md", header + result.strip() + "\n"
 
 
 # --- Registry ---
@@ -238,7 +363,8 @@ def main():
         "--only", help="Comma-separated artifact names to generate"
     )
     parser.add_argument(
-        "--provider", help="LLM provider: anthropic (default) or openai"
+        "--provider",
+        help="LLM provider: claude-code (default, uses Max subscription), anthropic, or openai",
     )
     parser.add_argument(
         "--dry-run",
@@ -247,7 +373,8 @@ def main():
     )
     args = parser.parse_args()
 
-    provider = args.provider or os.environ.get("GENERATE_PROVIDER", "anthropic")
+    provider = args.provider or os.environ.get("GENERATE_PROVIDER") or detect_provider()
+    print(f"Using provider: {provider}")
     nicholas, voice, positioning = load_sources()
 
     # Validate --only names

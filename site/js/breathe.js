@@ -22,16 +22,16 @@
  * @param {object} [opts] — configuration
  * @param {number} [opts.cycleDuration=10] — full cycle length in same units as time
  * @param {number} [opts.inhaleRatio=1.5] — how much faster inhale is vs exhale (1.5 = 50% faster)
- * @param {number} [opts.holdFraction=0.08] — fraction of cycle spent holding at full
- * @param {number} [opts.restFraction=0.30] — fraction of cycle spent resting at empty
+ * @param {number} [opts.holdFraction=0.09] — fraction of cycle spent holding at full
+ * @param {number} [opts.restFraction=0.27] — fraction of cycle spent resting at empty
  * @returns {number} 0–1 breathing value (0 = fully contracted, 1 = fully expanded)
  */
 function breathe(time, opts) {
   opts = opts || {};
   var cycleDuration = opts.cycleDuration || 10;
   var inhaleRatio   = opts.inhaleRatio   || 1.5;
-  var holdFraction  = opts.holdFraction  || 0.08;
-  var restFraction  = opts.restFraction  || 0.30;
+  var holdFraction  = opts.holdFraction  || 0.09;
+  var restFraction  = opts.restFraction  || 0.27;
 
   // Derive inhale/exhale fractions from the ratio
   // inhaleRatio = exhaleTime / inhaleTime

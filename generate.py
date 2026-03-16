@@ -154,7 +154,52 @@ def format_education_summary(nicholas):
 
 def generate_site_content(nicholas, voice, positioning, call_llm):
     """Generate about prose for the website."""
-    raise NotImplementedError("Task 3")
+    instruction = (
+        "Write exactly 2 paragraphs for a personal website About section. "
+        "Each paragraph should be 2-4 sentences. First person. No markdown formatting.\n\n"
+        "Output ONLY valid YAML with an `about:` key containing a list of exactly 2 strings, "
+        "each using the YAML block scalar `>` syntax. No other keys. No code fences.\n\n"
+        "Example format:\n"
+        "about:\n"
+        "  - >\n"
+        "    First paragraph text here.\n"
+        "  - >\n"
+        "    Second paragraph text here."
+    )
+    system = build_system_prompt(voice, positioning, instruction)
+
+    about = nicholas.get("about", {})
+    user = (
+        f"Themes: {yaml.dump(about.get('themes', []), default_flow_style=True).strip()}\n"
+        f"Through-line: {about.get('through_line', '')}\n"
+        f"Background facts: {yaml.dump(about.get('background_facts', []), default_flow_style=True).strip()}\n\n"
+        f"Education:\n{format_education_summary(nicholas)}\n\n"
+        f"Experience:\n{format_experience_summary(nicholas)}"
+    )
+
+    if call_llm is None:
+        print(f"  [dry-run] System prompt ({len(system)} chars)")
+        print(f"  [dry-run] User prompt ({len(user)} chars)")
+        return "outputs/site-content.yaml", SITE_CONTENT_HEADER + "about:\n  - >\n    [dry-run placeholder]\n"
+
+    raw = call_llm(system, user)
+    cleaned = strip_fences(raw)
+
+    # Validate YAML
+    parsed = yaml.safe_load(cleaned)
+    if not isinstance(parsed, dict) or "about" not in parsed:
+        raise ValueError("LLM output missing 'about' key")
+    if not isinstance(parsed["about"], list) or len(parsed["about"]) < 1:
+        raise ValueError("LLM output 'about' is not a list")
+
+    # Rebuild clean YAML from parsed data to ensure consistency
+    content = SITE_CONTENT_HEADER
+    content += "about:\n"
+    for paragraph in parsed["about"]:
+        text = paragraph.strip()
+        content += f"  - >\n    {text}\n"
+
+    return "outputs/site-content.yaml", content
 
 
 def generate_bio_short(nicholas, voice, positioning, call_llm):

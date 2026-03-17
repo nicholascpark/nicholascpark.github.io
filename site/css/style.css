@@ -452,10 +452,6 @@ body {
   line-height: 1.9;
   color: var(--color-text);
   max-width: 620px;
-  /* Gentle living text — opacity and spacing breathe with the dodecahedron */
-  opacity: calc(0.88 + var(--dodeca-breathe, 0) * 0.12);
-  letter-spacing: calc(0.005em + var(--dodeca-breathe, 0) * 0.008em);
-  word-spacing: calc(0.01em + var(--dodeca-breathe, 0) * 0.04em);
 }
 
 .section-prose p {
@@ -505,7 +501,6 @@ body {
   font-size: 0.85rem;
   color: var(--color-text-muted);
   line-height: 1.65;
-  opacity: calc(0.85 + var(--dodeca-breathe, 0) * 0.15);
 }
 
 /* --- Projects — open, airy --- */
@@ -552,7 +547,6 @@ body {
   font-size: 0.85rem;
   color: var(--color-text-muted);
   line-height: 1.6;
-  opacity: calc(0.85 + var(--dodeca-breathe, 0) * 0.15);
 }
 
 /* --- Footer --- */

@@ -1,1 +1,1 @@
-Senior AI/ML Engineer building reinforcement learning and multi-agent systems, founder of Zealot Analytics. I study how competing pressures between agents sharpen intelligence — and I ship what I learn.
+Staff Data Scientist at Intact Insurance Specialty Solutions, building at the intersection of reinforcement learning, multi-agent systems, and the adversarial dynamics that sharpen how intelligent systems learn. I run Zealot Analytics for AI consulting and engineering work where rigorous thinking and practical building are the same pursuit.

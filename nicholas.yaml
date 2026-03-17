@@ -28,7 +28,7 @@ ventures:
     role: Founder
     type: LLC
     focus: AI consulting and hands-on engineering
-    url: ""  # Will point to separate site when ready
+    url: "https://zealot.online"
     status: active
 
 # --- Structured points for LLM prose generation ---

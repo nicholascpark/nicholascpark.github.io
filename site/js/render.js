@@ -118,28 +118,6 @@ function renderHeader(profile) {
     spawnLoadRipple(toggle);
   });
 
-  // Venture line — Zealot Analytics
-  if (profile.ventures && profile.ventures.length > 0) {
-    const venture = profile.ventures[0];
-    const vtag = el('p', 'venture-tag');
-    vtag.textContent = 'Founder, ';
-    if (venture.url) {
-      const a = document.createElement('a');
-      a.href = venture.url;
-      a.textContent = venture.name;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      vtag.appendChild(a);
-    } else {
-      const span = document.createElement('span');
-      span.textContent = venture.name;
-      vtag.appendChild(span);
-    }
-    const focus = document.createTextNode(` \u2014 ${venture.focus}`);
-    vtag.appendChild(focus);
-    header.appendChild(vtag);
-  }
-
   // Links row
   const links = el('nav', 'links-row');
   const linkData = [
@@ -148,6 +126,9 @@ function renderHeader(profile) {
   ];
   if (profile.links.email) {
     linkData.push({ label: 'Email', url: `mailto:${profile.links.email}` });
+  }
+  if (profile.ventures && profile.ventures.length > 0 && profile.ventures[0].url) {
+    linkData.push({ label: 'Venture', url: profile.ventures[0].url });
   }
 
   linkData.forEach((link, i) => {

@@ -203,22 +203,68 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
+  /* --- Entrance animation --- */
+  // Phase 1 (0–2s):  Scale 0 → contained size, bold/luminous wireframe
+  // Phase 2 (2–3.5s): Scale contained → original (overflows viewport), glow fades
+  // Phase 3:         Original breathing as before
+  const ENTRANCE_DURATION = 2.0;   // phase 1: materialize
+  const TRANSITION_DURATION = 1.5; // phase 2: expand to full size
+  const CONTAINED_SCALE = 0.78;    // fits within viewport during entrance
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let entranceElapsed = prefersReducedMotion ? (ENTRANCE_DURATION + TRANSITION_DURATION) : 0;
+
+  // Smooth ease-out for materialization
+  function entranceEase(t) {
+    if (t >= 1) return 1;
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  // Smooth ease for transition back to full size
+  function transitionEase(t) {
+    if (t >= 1) return 1;
+    return t * t * (3 - 2 * t);  // smoothstep
+  }
+
   /* --- Animation loop --- */
   const baseRotationSpeed = 0.002;
   let time = 0;
+  let lastTimestamp = 0;
 
-  function animate() {
+  function animate(timestamp) {
     requestAnimationFrame(animate);
+
+    // Delta time for entrance (real seconds, not animation time)
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    var dt = (timestamp - lastTimestamp) / 1000;
+    lastTimestamp = timestamp;
+
     time += 0.01;
+
+    // --- Entrance progress ---
+    entranceElapsed += dt;
+    var totalDuration = ENTRANCE_DURATION + TRANSITION_DURATION;
+    var inEntrance = entranceElapsed < ENTRANCE_DURATION;
+    var inTransition = entranceElapsed >= ENTRANCE_DURATION && entranceElapsed < totalDuration;
+    var settled = entranceElapsed >= totalDuration;
+
+    // Phase 1 progress: 0→1 during materialization
+    var entranceT = Math.min(entranceElapsed / ENTRANCE_DURATION, 1);
+    var entranceProgress = entranceEase(entranceT);
+
+    // Phase 2 progress: 0→1 during expansion to full size
+    var transitionT = inTransition ? (entranceElapsed - ENTRANCE_DURATION) / TRANSITION_DURATION : (settled ? 1 : 0);
+    var transitionProgress = transitionEase(transitionT);
 
     // Smooth mouse lerp
     mouseX += (targetMouseX - mouseX) * 0.05;
     mouseY += (targetMouseY - mouseY) * 0.05;
 
     // Base rotation + mouse parallax + scroll offset
-    group.rotation.x = time * baseRotationSpeed * 0.7 + mouseY * 0.3 + scrollProgress * Math.PI * 0.5;
-    group.rotation.y = time * baseRotationSpeed + mouseX * 0.3 + scrollProgress * Math.PI * 0.3;
-    group.rotation.z = time * baseRotationSpeed * 0.3;
+    // During entrance: faster rotation for esoteric unveiling effect
+    var entranceRotBoost = settled ? 1 : 1 + Math.max(1 - entranceT, 0) * 3;
+    group.rotation.x = time * baseRotationSpeed * 0.7 * entranceRotBoost + mouseY * 0.3 + scrollProgress * Math.PI * 0.5;
+    group.rotation.y = time * baseRotationSpeed * entranceRotBoost + mouseX * 0.3 + scrollProgress * Math.PI * 0.3;
+    group.rotation.z = time * baseRotationSpeed * 0.3 * entranceRotBoost;
 
     // Billboard pentagons — make each instance face the camera
     const camQuat = camera.quaternion;
@@ -247,12 +293,35 @@
 
     // Human breathing via breathe.js — 10s cycle, inhale 50% faster than exhale
     var breatheEased = breathe(time / 0.6); // convert animation-time to real seconds
-    // Asymmetric: expansion +0.015, contraction -0.10
+    // Original breathing: 0.900 + breatheEased * 0.115
     var breatheScale = 0.900 + breatheEased * 0.115;
-    group.scale.setScalar(breatheScale);
 
-    // Edge opacity pulse — metallic shimmer
-    edgeMat.opacity = 0.6 + Math.sin(time * 0.3) * 0.15;
+    // Scale logic:
+    //   Phase 1: 0 → CONTAINED_SCALE (fits viewport, materializing)
+    //   Phase 2: CONTAINED_SCALE → original breatheScale (expands back to full size)
+    //   Phase 3: original breatheScale (normal breathing, overflows viewport)
+    var finalScale;
+    if (settled) {
+      finalScale = breatheScale;
+    } else if (inTransition) {
+      // Lerp from contained to original
+      finalScale = CONTAINED_SCALE + (breatheScale - CONTAINED_SCALE) * transitionProgress;
+    } else {
+      // Materializing from 0 to contained
+      finalScale = CONTAINED_SCALE * entranceProgress;
+    }
+    group.scale.setScalar(finalScale);
+
+    // --- Entrance mystic effects ---
+    // Glow intensity: full during entrance, fades through transition, gone after
+    var glowIntensity = settled ? 0 : (inTransition ? (1 - transitionProgress) : 1);
+
+    // Edge opacity: bold (1.0) → normal shimmer (0.6 ± 0.15)
+    var baseEdgeOpacity = 0.6 + Math.sin(time * 0.3) * 0.15;
+    edgeMat.opacity = baseEdgeOpacity + glowIntensity * (1.0 - baseEdgeOpacity);
+
+    // Face opacity: luminous glow (0.08) → near-invisible (0.0075)
+    faceMat.opacity = 0.0075 + glowIntensity * 0.075;
 
     // Theme-reactive color: platinum on light, gold on dark
     var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -273,5 +342,5 @@
     renderer.render(scene, camera);
   }
 
-  animate();
+  requestAnimationFrame(animate);
 })();

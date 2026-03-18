@@ -3,6 +3,9 @@
  * Fixed full-viewport canvas behind all content.
  * Mouse parallax + scroll-driven rotation.
  * Content-aware opacity: dodecahedron fades where it overlaps text.
+ *
+ * Entrance: tessellated lattice of dodecahedron copies fills viewport,
+ * grows + twists to morph cells, then shatters radially outward.
  */
 
 (function () {
@@ -49,7 +52,6 @@
   group.add(faceMesh);
 
   // --- Pentagon vertices ---
-  // Extract unique vertex positions
   const positions = geo.attributes.position;
   const uniqueVertices = [];
   const seen = new Set();
@@ -65,11 +67,10 @@
     }
   }
 
-  // Create a pentagon shape — 56% of original size (0.08 * 0.56 ≈ 0.045)
   const pentRadius = 0.015;
   const pentShape = new THREE.Shape();
   for (let i = 0; i < 5; i++) {
-    const angle = (i / 5) * Math.PI * 2 - Math.PI / 2; // start from top
+    const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
     const px = Math.cos(angle) * pentRadius;
     const py = Math.sin(angle) * pentRadius;
     if (i === 0) pentShape.moveTo(px, py);
@@ -83,7 +84,6 @@
     side: THREE.DoubleSide,
   });
 
-  // Place a pentagon at each vertex, using InstancedMesh for performance
   const pentMesh = new THREE.InstancedMesh(pentGeo, pentMat, uniqueVertices.length);
   const dummy = new THREE.Object3D();
 
@@ -93,7 +93,6 @@
     pentMesh.setMatrixAt(i, dummy.matrix);
   });
 
-  // Pentagon meshes always face camera — updated in animation loop
   group.add(pentMesh);
 
 
@@ -116,13 +115,11 @@
   });
 
   /* --- Content-aware opacity mask --- */
-  // Build a mask once in document-space (full page height).
-  // On scroll, just shift mask-position — no regeneration, no flicker.
   const maskCanvas = document.createElement('canvas');
   const maskCtx = maskCanvas.getContext('2d');
   let prevMaskUrl = null;
 
-  const MASK_SELECTORS = '.site-header, .section-prose, .section-title, .interests-list li, .projects-list li, .venture-tag, .links-row, .site-footer p';
+  const MASK_SELECTORS = '.site-header, .section-prose, .section-title, .interests-list li, .projects-list li, .links-row, .site-footer p';
 
   function buildContentMask() {
     const root = document.getElementById('root');
@@ -137,11 +134,9 @@
     maskCanvas.height = Math.round(docH * scale);
     const ctx = maskCtx;
 
-    // Full opacity everywhere — dodecahedron visible
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
 
-    // Erase mode with blur for soft edges
     ctx.globalCompositeOperation = 'destination-out';
     ctx.filter = 'blur(' + Math.round(22 * scale) + 'px)';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
@@ -150,7 +145,6 @@
     const pad = 20;
 
     els.forEach(function (el) {
-      // getBoundingClientRect is viewport-relative; add scrollY for document-space
       var r = el.getBoundingClientRect();
       ctx.fillRect(
         (r.left - pad) * scale,
@@ -163,7 +157,6 @@
     ctx.globalCompositeOperation = 'source-over';
     ctx.filter = 'none';
 
-    // Sync data URL — no async flicker
     var dataUrl = maskCanvas.toDataURL('image/png');
 
     canvas.style.maskImage = 'url(' + dataUrl + ')';
@@ -173,7 +166,6 @@
     canvas.style.maskRepeat = 'no-repeat';
     canvas.style.webkitMaskRepeat = 'no-repeat';
 
-    // Set initial scroll position
     updateMaskScroll();
   }
 
@@ -183,18 +175,294 @@
     canvas.style.webkitMaskPosition = canvas.style.maskPosition;
   }
 
-  // Scroll only shifts the mask — no rebuild, no flicker
   window.addEventListener('scroll', updateMaskScroll, { passive: true });
-  // Rebuild mask on resize (layout changes)
   window.addEventListener('resize', function () {
     requestAnimationFrame(buildContentMask);
   });
-  // Initial build after DOM settles
-  setTimeout(buildContentMask, 400);
-  // Expose for theme toggle to trigger rebuild
   window.rebuildContentMask = function () {
     setTimeout(buildContentMask, 50);
   };
+
+
+  /* --- Entrance: tessellated lattice with radial shatter --- */
+
+  const ENTRANCE = {
+    LATTICE_HOLD: 2.5,
+    GROW_END: 5.0,
+    SHATTER_START: 5.0,
+    SHATTER_END: 7.5,
+    CONTAINED_SCALE: 0.78,
+    TWIST_AMOUNT: Math.PI / 3,
+    GEO_RADIUS: 3.16,
+  };
+
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let entranceDone = prefersReducedMotion;
+  let entranceElapsed = 0;
+  let entranceGroup = null;
+  let entranceFragments = [];
+  let entranceCopies = [];
+  let entranceLines = null;
+  let entranceCopyMat = null;
+  let entranceLineMat = null;
+
+  function smoothstep(t) {
+    t = Math.max(0, Math.min(1, t));
+    return t * t * (3 - 2 * t);
+  }
+
+  // --- Create dodecahedron copies in concentric rings ---
+  function createEntranceCopies() {
+    entranceGroup = new THREE.Group();
+    group.add(entranceGroup);
+
+    var R = ENTRANCE.GEO_RADIUS;
+    entranceCopyMat = new THREE.LineBasicMaterial({
+      color: initColor,
+      transparent: true,
+      opacity: 0,
+    });
+
+    var d1 = 2 * R * Math.cos(Math.PI / 5);
+    var rings = [
+      [5,  d1],
+      [5,  2 * R],
+      [10, d1 + R * 1.1],
+      [15, d1 + R * 1.1 + R * 1.2],
+      [20, d1 + R * 1.1 + R * 1.2 + R * 1.1],
+    ];
+
+    rings.forEach(function (ring) {
+      var count = ring[0];
+      var dist = ring[1];
+      for (var i = 0; i < count; i++) {
+        var angle = (i / count) * Math.PI * 2;
+        var copy = new THREE.LineSegments(edgeGeo, entranceCopyMat.clone());
+        copy.position.set(
+          Math.cos(angle) * dist,
+          Math.sin(angle) * dist,
+          0
+        );
+        copy.userData.baseDistance = dist;
+        copy.userData.angle = angle;
+        entranceGroup.add(copy);
+        entranceCopies.push(copy);
+      }
+    });
+  }
+
+  // --- Create extended edge lines ---
+  function createExtendedLines() {
+    var edgePositions = edgeGeo.attributes.position;
+    var edgeCount = edgePositions.count / 2;
+    var allVertices = [];
+    var EXT_LENGTH = 50;
+
+    function addExtendedEdges(offsetX, offsetY, offsetZ) {
+      for (var i = 0; i < edgeCount; i++) {
+        var ax = edgePositions.getX(i * 2) + offsetX;
+        var ay = edgePositions.getY(i * 2) + offsetY;
+        var az = edgePositions.getZ(i * 2) + offsetZ;
+        var bx = edgePositions.getX(i * 2 + 1) + offsetX;
+        var by = edgePositions.getY(i * 2 + 1) + offsetY;
+        var bz = edgePositions.getZ(i * 2 + 1) + offsetZ;
+
+        var dx = bx - ax, dy = by - ay, dz = bz - az;
+        var len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (len < 0.001) continue;
+        var nx = dx / len, ny = dy / len, nz = dz / len;
+
+        allVertices.push(
+          ax - nx * EXT_LENGTH, ay - ny * EXT_LENGTH, az - nz * EXT_LENGTH,
+          bx + nx * EXT_LENGTH, by + ny * EXT_LENGTH, bz + nz * EXT_LENGTH
+        );
+      }
+    }
+
+    addExtendedEdges(0, 0, 0);
+    entranceCopies.forEach(function (c) {
+      addExtendedEdges(c.position.x, c.position.y, c.position.z);
+    });
+
+    var lineGeo = new THREE.BufferGeometry();
+    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(allVertices, 3));
+
+    entranceLineMat = new THREE.LineBasicMaterial({
+      color: initColor,
+      transparent: true,
+      opacity: 0,
+    });
+
+    entranceLines = new THREE.LineSegments(lineGeo, entranceLineMat);
+    entranceGroup.add(entranceLines);
+  }
+
+  // --- Rebuild extended lines when copies reposition ---
+  function rebuildExtendedLines() {
+    if (!entranceLines) return;
+    var edgePositions = edgeGeo.attributes.position;
+    var edgeCount = edgePositions.count / 2;
+    var allVertices = [];
+    var EXT_LENGTH = 50;
+
+    function addExtendedEdges(offsetX, offsetY, offsetZ) {
+      for (var i = 0; i < edgeCount; i++) {
+        var ax = edgePositions.getX(i * 2) + offsetX;
+        var ay = edgePositions.getY(i * 2) + offsetY;
+        var az = edgePositions.getZ(i * 2) + offsetZ;
+        var bx = edgePositions.getX(i * 2 + 1) + offsetX;
+        var by = edgePositions.getY(i * 2 + 1) + offsetY;
+        var bz = edgePositions.getZ(i * 2 + 1) + offsetZ;
+
+        var dx = bx - ax, dy = by - ay, dz = bz - az;
+        var len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (len < 0.001) continue;
+        var nx = dx / len, ny = dy / len, nz = dz / len;
+
+        allVertices.push(
+          ax - nx * EXT_LENGTH, ay - ny * EXT_LENGTH, az - nz * EXT_LENGTH,
+          bx + nx * EXT_LENGTH, by + ny * EXT_LENGTH, bz + nz * EXT_LENGTH
+        );
+      }
+    }
+
+    addExtendedEdges(0, 0, 0);
+    entranceCopies.forEach(function (c) {
+      addExtendedEdges(c.position.x, c.position.y, c.position.z);
+    });
+
+    var posAttr = entranceLines.geometry.attributes.position;
+    if (posAttr.count * 3 === allVertices.length) {
+      for (var i = 0; i < allVertices.length; i++) {
+        posAttr.array[i] = allVertices[i];
+      }
+      posAttr.needsUpdate = true;
+    } else {
+      entranceLines.geometry.dispose();
+      var newGeo = new THREE.BufferGeometry();
+      newGeo.setAttribute('position', new THREE.Float32BufferAttribute(allVertices, 3));
+      entranceLines.geometry = newGeo;
+    }
+  }
+
+  // --- Generate shatter fragments ---
+  function generateShatterFragments() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var fragColor = isDark ? 0xc9a84c : 0x4a4640;
+
+    var cols = 15;
+    var rows = Math.round(cols * (window.innerHeight / window.innerWidth));
+    var cellW = window.innerWidth / cols;
+    var cellH = window.innerHeight / rows;
+
+    var centerScreen = new THREE.Vector3(0, 0, 0).project(camera);
+    var centerSX = (centerScreen.x + 1) / 2 * window.innerWidth;
+    var centerSY = (1 - centerScreen.y) / 2 * window.innerHeight;
+    var screenRadius = ENTRANCE.GEO_RADIUS * ENTRANCE.CONTAINED_SCALE * 80;
+
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        var sx = (col + 0.3 + Math.random() * 0.4) * cellW;
+        var sy = (row + 0.3 + Math.random() * 0.4) * cellH;
+
+        var dxS = sx - centerSX;
+        var dyS = sy - centerSY;
+        var distFromCenter = Math.sqrt(dxS * dxS + dyS * dyS);
+        if (distFromCenter < screenRadius) continue;
+
+        var sides = 3 + Math.floor(Math.random() * 3);
+        var fragSize = Math.min(cellW, cellH) * (0.3 + Math.random() * 0.3);
+        var baseAngle = Math.random() * Math.PI * 2;
+        var shape = new THREE.Shape();
+        for (var i = 0; i < sides; i++) {
+          var a = baseAngle + (i / sides) * Math.PI * 2;
+          var r = fragSize * 0.01; // world-space scale
+          var px = Math.cos(a) * r;
+          var py = Math.sin(a) * r;
+          if (i === 0) shape.moveTo(px, py);
+          else shape.lineTo(px, py);
+        }
+
+        var fragGeo = new THREE.ShapeGeometry(shape);
+        var fragMat = new THREE.MeshBasicMaterial({
+          color: fragColor,
+          transparent: true,
+          opacity: 1.0,
+          side: THREE.DoubleSide,
+        });
+        var mesh = new THREE.Mesh(fragGeo, fragMat);
+
+        // Convert screen pos to world pos
+        var ndcX = (sx / window.innerWidth) * 2 - 1;
+        var ndcY = -(sy / window.innerHeight) * 2 + 1;
+        var worldPos = new THREE.Vector3(ndcX, ndcY, 0.5).unproject(camera);
+        var dir = worldPos.sub(camera.position).normalize();
+        var t = -camera.position.z / dir.z;
+        var pos = camera.position.clone().add(dir.multiplyScalar(t));
+
+        mesh.position.copy(pos);
+        mesh.lookAt(camera.position);
+
+        var angle = Math.atan2(pos.y, pos.x);
+        var speed = 0.5 + Math.random() * 1.5;
+
+        scene.add(mesh);
+        entranceFragments.push({
+          mesh: mesh,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          vz: (Math.random() - 0.5) * 0.3,
+          vr: (Math.random() - 0.5) * 0.08,
+          rotAxis: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
+          opacity: 1.0,
+          delay: (distFromCenter / Math.max(window.innerWidth, window.innerHeight)) * 0.8,
+          triggered: false,
+        });
+
+        if (entranceFragments.length >= 200) return;
+      }
+    }
+  }
+
+  // --- Entrance cleanup ---
+  function cleanupEntrance() {
+    entranceFragments.forEach(function (f) {
+      scene.remove(f.mesh);
+      f.mesh.geometry.dispose();
+      f.mesh.material.dispose();
+    });
+    entranceFragments = [];
+
+    if (entranceGroup) {
+      entranceGroup.traverse(function (obj) {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(function (m) { m.dispose(); });
+          else obj.material.dispose();
+        }
+      });
+      group.remove(entranceGroup);
+      entranceGroup = null;
+    }
+    entranceCopies = [];
+    entranceLines = null;
+    entranceCopyMat = null;
+    entranceLineMat = null;
+    entranceDone = true;
+
+    buildContentMask();
+  }
+
+  // --- Initialize entrance ---
+  if (!entranceDone) {
+    createEntranceCopies();
+    createExtendedLines();
+    group.scale.setScalar(ENTRANCE.CONTAINED_SCALE);
+  } else {
+    // No entrance — build content mask immediately
+    setTimeout(buildContentMask, 400);
+  }
+
 
   /* --- Resize --- */
   window.addEventListener('resize', () => {
@@ -203,27 +471,6 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
-  /* --- Entrance animation --- */
-  // Phase 1 (0–2s):  Scale 0 → contained size, bold/luminous wireframe
-  // Phase 2 (2–3.5s): Scale contained → original (overflows viewport), glow fades
-  // Phase 3:         Original breathing as before
-  const ENTRANCE_DURATION = 2.0;   // phase 1: materialize
-  const TRANSITION_DURATION = 1.5; // phase 2: expand to full size
-  const CONTAINED_SCALE = 0.78;    // fits within viewport during entrance
-  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let entranceElapsed = prefersReducedMotion ? (ENTRANCE_DURATION + TRANSITION_DURATION) : 0;
-
-  // Smooth ease-out for materialization
-  function entranceEase(t) {
-    if (t >= 1) return 1;
-    return 1 - Math.pow(1 - t, 3);
-  }
-
-  // Smooth ease for transition back to full size
-  function transitionEase(t) {
-    if (t >= 1) return 1;
-    return t * t * (3 - 2 * t);  // smoothstep
-  }
 
   /* --- Animation loop --- */
   const baseRotationSpeed = 0.002;
@@ -233,55 +480,174 @@
   function animate(timestamp) {
     requestAnimationFrame(animate);
 
-    // Delta time for entrance (real seconds, not animation time)
     if (!lastTimestamp) lastTimestamp = timestamp;
-    var dt = (timestamp - lastTimestamp) / 1000;
+    var dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1); // cap dt to avoid jumps
     lastTimestamp = timestamp;
 
     time += 0.01;
-
-    // --- Entrance progress ---
-    entranceElapsed += dt;
-    var totalDuration = ENTRANCE_DURATION + TRANSITION_DURATION;
-    var inEntrance = entranceElapsed < ENTRANCE_DURATION;
-    var inTransition = entranceElapsed >= ENTRANCE_DURATION && entranceElapsed < totalDuration;
-    var settled = entranceElapsed >= totalDuration;
-
-    // Phase 1 progress: 0→1 during materialization
-    var entranceT = Math.min(entranceElapsed / ENTRANCE_DURATION, 1);
-    var entranceProgress = entranceEase(entranceT);
-
-    // Phase 2 progress: 0→1 during expansion to full size
-    var transitionT = inTransition ? (entranceElapsed - ENTRANCE_DURATION) / TRANSITION_DURATION : (settled ? 1 : 0);
-    var transitionProgress = transitionEase(transitionT);
 
     // Smooth mouse lerp
     mouseX += (targetMouseX - mouseX) * 0.05;
     mouseY += (targetMouseY - mouseY) * 0.05;
 
-    // Base rotation + mouse parallax + scroll offset
-    // During entrance: faster rotation for esoteric unveiling effect
-    var entranceRotBoost = settled ? 1 : 1 + Math.max(1 - entranceT, 0) * 3;
-    group.rotation.x = time * baseRotationSpeed * 0.7 * entranceRotBoost + mouseY * 0.3 + scrollProgress * Math.PI * 0.5;
-    group.rotation.y = time * baseRotationSpeed * entranceRotBoost + mouseX * 0.3 + scrollProgress * Math.PI * 0.3;
-    group.rotation.z = time * baseRotationSpeed * 0.3 * entranceRotBoost;
+    // Human breathing
+    var breatheEased = breathe(time / 0.6);
+    var breatheScale = 0.900 + breatheEased * 0.115;
+
+    // --- Entrance system ---
+    if (!entranceDone) {
+      entranceElapsed += dt;
+      var fadeIn = Math.min(entranceElapsed / 1.0, 1);
+
+      // Theme sync for entrance materials
+      var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      var targetHex = isDark ? 0xc9a84c : 0x4a4640;
+      entranceCopies.forEach(function (c) {
+        if (c.material.color.getHex() !== targetHex) c.material.color.setHex(targetHex);
+      });
+      if (entranceLines && entranceLineMat.color.getHex() !== targetHex) {
+        entranceLineMat.color.setHex(targetHex);
+      }
+
+      if (entranceElapsed < ENTRANCE.LATTICE_HOLD) {
+        // === Phase 1: Static lattice, frozen rotation ===
+        group.scale.setScalar(ENTRANCE.CONTAINED_SCALE);
+        group.rotation.x = 0;
+        group.rotation.y = 0;
+        group.rotation.z = 0;
+
+        // Glow
+        edgeMat.opacity = fadeIn * 1.0;
+        faceMat.opacity = fadeIn * 0.05;
+
+        // Fade in copies and lines
+        entranceCopies.forEach(function (c) {
+          c.material.opacity = fadeIn * 0.3;
+        });
+        if (entranceLineMat) entranceLineMat.opacity = fadeIn * 0.12;
+
+      } else if (entranceElapsed < ENTRANCE.GROW_END) {
+        // === Phase 2: Growth + twist ===
+        var growT = smoothstep((entranceElapsed - ENTRANCE.LATTICE_HOLD) / (ENTRANCE.GROW_END - ENTRANCE.LATTICE_HOLD));
+
+        // Scale: contained → breathing
+        var currentScale = ENTRANCE.CONTAINED_SCALE + (breatheScale - ENTRANCE.CONTAINED_SCALE) * growT;
+        group.scale.setScalar(currentScale);
+
+        // Twist + gradual rotation unfreeze
+        var twist = ENTRANCE.TWIST_AMOUNT * growT;
+        var rotInfluence = growT;
+        group.rotation.x = (time * baseRotationSpeed * 0.7 + mouseY * 0.3 + scrollProgress * Math.PI * 0.5) * rotInfluence;
+        group.rotation.y = twist + (time * baseRotationSpeed + mouseX * 0.3 + scrollProgress * Math.PI * 0.3) * rotInfluence;
+        group.rotation.z = (time * baseRotationSpeed * 0.3) * rotInfluence;
+
+        // Reposition copies
+        var scaleRatio = currentScale / ENTRANCE.CONTAINED_SCALE;
+        entranceCopies.forEach(function (c) {
+          var newDist = c.userData.baseDistance * scaleRatio;
+          c.position.set(
+            Math.cos(c.userData.angle) * newDist,
+            Math.sin(c.userData.angle) * newDist,
+            0
+          );
+        });
+
+        // Rebuild lines with new positions (throttle: every 3rd frame)
+        if (Math.floor(entranceElapsed * 60) % 3 === 0) {
+          rebuildExtendedLines();
+        }
+
+        // Glow fadeout
+        var glowFade = 1 - growT;
+        edgeMat.opacity = (0.6 + Math.sin(time * 0.3) * 0.15) + glowFade * 0.4;
+        faceMat.opacity = 0.0075 + glowFade * 0.045;
+
+        // Copy + line opacity
+        entranceCopies.forEach(function (c) {
+          c.material.opacity = 0.3 * (1 - growT * 0.3);
+        });
+        if (entranceLineMat) entranceLineMat.opacity = 0.12 * (1 - growT * 0.3);
+
+      } else {
+        // === Phase 3: Shatter ===
+        if (entranceFragments.length === 0) {
+          generateShatterFragments();
+        }
+
+        var st = entranceElapsed - ENTRANCE.SHATTER_START;
+
+        // Normal rotation + scale
+        group.rotation.x = time * baseRotationSpeed * 0.7 + mouseY * 0.3 + scrollProgress * Math.PI * 0.5;
+        group.rotation.y = ENTRANCE.TWIST_AMOUNT + time * baseRotationSpeed + mouseX * 0.3 + scrollProgress * Math.PI * 0.3;
+        group.rotation.z = time * baseRotationSpeed * 0.3;
+        group.scale.setScalar(breatheScale);
+        edgeMat.opacity = 0.6 + Math.sin(time * 0.3) * 0.15;
+        faceMat.opacity = 0.0075;
+
+        // Fade copies and lines
+        var copyFade = Math.max(0, 1 - st * 0.67);
+        var lineFade = Math.max(0, 1 - st);
+        entranceCopies.forEach(function (c) { c.material.opacity = 0.3 * copyFade; });
+        if (entranceLineMat) entranceLineMat.opacity = 0.12 * lineFade;
+
+        // Theme sync for fragments
+        var isDarkFrag = document.documentElement.getAttribute('data-theme') === 'dark';
+        var fragTargetHex = isDarkFrag ? 0xc9a84c : 0x4a4640;
+
+        // Animate fragments
+        var allGone = true;
+        entranceFragments.forEach(function (f) {
+          if (f.mesh.material.color.getHex() !== fragTargetHex) {
+            f.mesh.material.color.setHex(fragTargetHex);
+          }
+
+          var ft = Math.max(0, st - f.delay);
+          if (ft <= 0) { allGone = false; return; }
+          if (!f.triggered) f.triggered = true;
+
+          var accel = 1 + ft * 0.3;
+          f.mesh.position.x += f.vx * dt * accel * 3;
+          f.mesh.position.y += f.vy * dt * accel * 3;
+          f.mesh.position.z += f.vz * dt * accel * 3;
+
+          f.mesh.rotateOnAxis(f.rotAxis, f.vr);
+
+          f.opacity = Math.max(0, 1.0 - ft * 0.5);
+          f.mesh.material.opacity = f.opacity;
+
+          if (f.opacity > 0) allGone = false;
+        });
+
+        // Cleanup when done
+        if (allGone && st > 2.0) {
+          cleanupEntrance();
+        }
+      }
+
+    } else {
+      // === Post-entrance: normal behavior ===
+      group.rotation.x = time * baseRotationSpeed * 0.7 + mouseY * 0.3 + scrollProgress * Math.PI * 0.5;
+      group.rotation.y = ENTRANCE.TWIST_AMOUNT + time * baseRotationSpeed + mouseX * 0.3 + scrollProgress * Math.PI * 0.3;
+      group.rotation.z = time * baseRotationSpeed * 0.3;
+
+      group.scale.setScalar(breatheScale);
+
+      edgeMat.opacity = 0.6 + Math.sin(time * 0.3) * 0.15;
+      faceMat.opacity = 0.0075;
+    }
 
     // Billboard pentagons — make each instance face the camera
     const camQuat = camera.quaternion;
     uniqueVertices.forEach((v, i) => {
       dummy.position.set(v.x, v.y, v.z);
-      // Apply group's world rotation to get world position
       dummy.position.applyMatrix4(group.matrixWorld);
 
-      // Depth-based scaling: front vertices larger, rear smaller
       var depthZ = dummy.position.z;
       var depthScale = THREE.MathUtils.clamp(
         THREE.MathUtils.mapLinear(depthZ, -3.5, 3.5, 0.6, 1.3),
         0.6, 1.3
       );
 
-      // We need position in group-local space for the InstancedMesh
-      // Set local position, apply inverse group rotation to camera quat
       dummy.position.set(v.x, v.y, v.z);
       const invGroupQuat = group.quaternion.clone().invert();
       dummy.quaternion.copy(camQuat).premultiply(invGroupQuat);
@@ -291,39 +657,7 @@
     });
     pentMesh.instanceMatrix.needsUpdate = true;
 
-    // Human breathing via breathe.js — 10s cycle, inhale 50% faster than exhale
-    var breatheEased = breathe(time / 0.6); // convert animation-time to real seconds
-    // Original breathing: 0.900 + breatheEased * 0.115
-    var breatheScale = 0.900 + breatheEased * 0.115;
-
-    // Scale logic:
-    //   Phase 1: 0 → CONTAINED_SCALE (fits viewport, materializing)
-    //   Phase 2: CONTAINED_SCALE → original breatheScale (expands back to full size)
-    //   Phase 3: original breatheScale (normal breathing, overflows viewport)
-    var finalScale;
-    if (settled) {
-      finalScale = breatheScale;
-    } else if (inTransition) {
-      // Lerp from contained to original
-      finalScale = CONTAINED_SCALE + (breatheScale - CONTAINED_SCALE) * transitionProgress;
-    } else {
-      // Materializing from 0 to contained
-      finalScale = CONTAINED_SCALE * entranceProgress;
-    }
-    group.scale.setScalar(finalScale);
-
-    // --- Entrance mystic effects ---
-    // Glow intensity: full during entrance, fades through transition, gone after
-    var glowIntensity = settled ? 0 : (inTransition ? (1 - transitionProgress) : 1);
-
-    // Edge opacity: bold (1.0) → normal shimmer (0.6 ± 0.15)
-    var baseEdgeOpacity = 0.6 + Math.sin(time * 0.3) * 0.15;
-    edgeMat.opacity = baseEdgeOpacity + glowIntensity * (1.0 - baseEdgeOpacity);
-
-    // Face opacity: luminous glow (0.08) → near-invisible (0.0075)
-    faceMat.opacity = 0.0075 + glowIntensity * 0.075;
-
-    // Theme-reactive color: platinum on light, gold on dark
+    // Theme-reactive color
     var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     var targetHex = isDark ? 0xc9a84c : 0x4a4640;
     if (edgeMat.color.getHex() !== targetHex) {
@@ -332,7 +666,7 @@
       pentMat.color.setHex(targetHex);
     }
 
-    // --- Time bridge: export state to CSS custom properties ---
+    // Time bridge: export state to CSS custom properties
     var docStyle = document.documentElement.style;
     docStyle.setProperty('--dodeca-breathe', breatheEased.toFixed(3));
     docStyle.setProperty('--dodeca-rx', ((group.rotation.x * 180 / Math.PI) % 360).toFixed(1));

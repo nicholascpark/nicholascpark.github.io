@@ -1,0 +1,20 @@
+# Build artifacts
+outputs/resume.pdf
+outputs/TLCresume.sty
+outputs/*.aux
+outputs/*.log
+outputs/*.out
+outputs/*.fls
+outputs/*.fdb_latexmk
+
+# LinkedIn session state
+.playwright-state/
+
+# macOS
+.DS_Store
+
+# Superpowers plugin cache
+.superpowers/
+
+# Playwright MCP logs
+.playwright-mcp/

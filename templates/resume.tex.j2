@@ -1,0 +1,167 @@
+\documentclass[letter,10pt]{article}
+\usepackage[utf8]{inputenc}
+
+%====================
+% OFFICIAL PUBLIC OVERLEAF TEMPLATE
+% https://www.overleaf.com/latex/templates/data-science-tech-resume-template/zcdmpfxrzjhv
+%
+%====================
+%
+% Resume template for data scientists, a complement to data-science-tech-cover-letter-template:
+% https://www.overleaf.com/latex/templates/data-science-tech-cover-letter-template/gbrcqktbsfxf
+%
+% Files:        resume.tex: Main file
+%               _header.tex: header code
+%               TLCresume.sty: style file containing formatting details
+%               section/objective: https://www.indeed.com/career-advice/resumes-cover-letters/resume-objective-examples
+%               section/skills: table of skills
+%               section/experience: projects or roles
+%               section/education: schools and stuff
+%               section/activities: optional, could comment out in resume.tex.
+%
+% Editor:       https://github.com/TimmyChan
+%               https://www.linkedin.com/in/timmy-l-chan/
+%
+% Last Updated: March 24th, 2022
+%
+%====================
+
+
+\usepackage{TLCresume}
+
+%====================
+% CONTACT INFORMATION
+%====================
+\def\name{\VAR{data.name | latex_escape}} % Name Here
+\def\phone{\VAR{data.phone | format_phone}}
+\def\city{\VAR{data.location | latex_escape}}
+\def\email{\VAR{data.links.email | latex_escape}}
+\def\LinkedIn{\VAR{data.links.linkedin | replace("https://www.linkedin.com/in/", "") | replace("/", "")}} % linkedin.com/in/______
+\def\github{\VAR{data.links.github | replace("https://github.com/", "") | replace("/", "")}} % github username
+\def\role{\VAR{data.resume_title | latex_escape}} % JOB TITLE
+
+%====================
+% Header: Contact
+%====================
+
+\RequirePackage{fancyhdr}
+\fancypagestyle{fancy}{%
+\fancyhf{}
+\lhead{\phone \\ % PHONE
+        \city \\ % city
+	    \href{mailto:\email}{\email}} % EMAIL}
+	\chead{%
+	    \centering {\Huge \skills \name \vspace{.25em}} \\ % feel free to adjust vspace to 0
+	    {\color{highlight} \Large{\role}}}%
+	    \rhead{\bf{\VAR{data.citizenship}}\\ % Portfolio
+	    \href{https://github.com/\github}{github.com/\github} \\% Github
+	    \href{https://www.linkedin.com/in/\LinkedIn}{linkedin.com/in/\LinkedIn}} % LinkedIn
+\renewcommand{\headrulewidth}{1pt}% 2pt header rule
+\renewcommand{\headrule}{\hbox to\headwidth{%
+  \color{highlight}\leaders\hrule height \headrulewidth\hfill}}
+}
+\pagestyle{fancy}
+
+\setlength{\headheight}{90pt}
+\setlength{\headsep}{5pt}
+
+\begin{document}
+%====================
+% Objective Statement
+%====================
+\noindent
+\VAR{data.about.objective | trim | latex_escape}
+
+\section{Education}
+\BLOCK{for edu in data.education}
+\BLOCK{if edu.gpa}
+\subsection{{\VAR{edu.degree | latex_escape} (GPA: \VAR{edu.gpa})} | \textit{\VAR{edu.institution | latex_escape}} \hfill \VAR{edu.years}}
+\BLOCK{else}
+\subsection{{\VAR{edu.degree | latex_escape}} | \textit{\VAR{edu.institution | latex_escape}} \hfill \VAR{edu.years}}
+\BLOCK{endif}
+\BLOCK{if edu.coursework}
+\begin{zitemize}
+\item \normalfont Relevant Coursework: \VAR{edu.coursework | join(", ")}, etc.
+\end{zitemize}
+\BLOCK{endif}
+\BLOCK{if not loop.last}
+
+\BLOCK{endif}
+\BLOCK{endfor}
+\vspace{4mm} % Add space between title and list
+
+\section{Work Experience (By Project Per Organization)}
+\BLOCK{for company in data.experience}
+%====================
+\BLOCK{if company.contracted_via}
+\subsection{\VAR{company.role | latex_escape} @ \VAR{company.company | latex_escape} (\VAR{company.industry | latex_escape}; Contracted via \VAR{company.contracted_via | latex_escape}) \hfill \VAR{company.years}}
+\BLOCK{elif company.acquired_by}
+\subsection{\VAR{company.role | latex_escape} @ \VAR{company.company | latex_escape} (acquired by \VAR{company.acquired_by | latex_escape}) \hfill \VAR{company.years}}
+\BLOCK{else}
+\subsection{\VAR{company.role | latex_escape} @ \VAR{company.company | latex_escape} (\VAR{company.industry | latex_escape}) \hfill \VAR{company.years}}
+\BLOCK{endif}
+\vspace{0.5em}
+\BLOCK{for project in company.projects}
+\BLOCK{if loop.first}
+\subtext{\textbf{\VAR{project.name | latex_escape}\BLOCK{if project.technologies}   (\VAR{project.technologies | join(", ") | latex_escape})\BLOCK{endif}}}
+\BLOCK{else}
+\subsection{\textbf{\textit{\VAR{project.name | latex_escape}\BLOCK{if project.technologies}   (\VAR{project.technologies | join(", ") | latex_escape})\BLOCK{endif}}}}
+\vspace{0.1em}
+\BLOCK{endif}
+\begin{zitemize}
+\BLOCK{for highlight in project.highlights}
+\item \VAR{highlight | trim | latex_escape}
+\BLOCK{endfor}
+\end{zitemize}
+\BLOCK{if not loop.last}
+
+\BLOCK{endif}
+\BLOCK{endfor}
+\BLOCK{if company.company in page_break_after}
+
+\pagebreak
+\BLOCK{elif not loop.last}
+\vspace{0.6em}
+
+\BLOCK{endif}
+\BLOCK{endfor}
+
+\section{Skills}
+\begin{tabular}{p{11em} p{1em} p{43em}}
+\skills{Languages} & & \VAR{data.skills.languages | join(", ") | latex_escape} \\
+\skills{AI/ML Frameworks} & & \VAR{data.skills.ai_ml_frameworks | join(", ") | latex_escape} \\
+\skills{Data Management} & &  \VAR{data.skills.data_management | join(", ") | latex_escape} \\
+\skills{Deployment \& Monitoring} & & \VAR{data.skills.deployment_and_monitoring | join(", ") | latex_escape} \\
+\skills{Visual/Reporting} & &  \VAR{data.skills.visualization | map("latex_escape") | join(", ")}
+\end{tabular}
+
+\vspace{2mm} % Add space between title and list
+
+\section{Advanced Machine Learning Research}
+\BLOCK{for item in data.research}
+\subsection{{\VAR{item.category | replace("-", " ") | title | replace("Nlp", "NLP") | latex_escape} (\VAR{item.technologies | join(", ") | latex_escape}) \hfill \VAR{item.period}}}
+\begin{zitemize}
+\BLOCK{if item.status}
+\item \normalfont \VAR{item.description | trim | latex_escape} \bf{(\VAR{item.status | latex_escape})}
+\BLOCK{else}
+\item \normalfont \VAR{item.description | trim | latex_escape}
+\BLOCK{endif}
+\end{zitemize}
+
+\BLOCK{if not loop.last}
+
+\BLOCK{endif}
+\BLOCK{endfor}
+
+\section{Actuarial Exams (Pre-Associateship in the Casualty Actuarial Society)}
+\begin{zitemize}
+\BLOCK{for exam in data.actuarial_exams}
+\BLOCK{if exam.note}
+\item \VAR{exam.name | latex_escape} (\VAR{exam.note | latex_escape})
+\BLOCK{else}
+\item \VAR{exam.name | latex_escape}
+\BLOCK{endif}
+\BLOCK{endfor}
+\end{zitemize}
+
+\end{document}

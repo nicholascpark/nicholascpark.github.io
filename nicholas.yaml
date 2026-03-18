@@ -10,6 +10,7 @@ name: Nicholas C. Park
 location: New York City Metropolitan Area
 phone: "(201) 708-5900"
 citizenship: U.S. Citizen
+resume_title: "Sr. AI Engineer / Lead Data Scientist"
 
 languages:
   - language: English
@@ -28,7 +29,7 @@ ventures:
     role: Founder
     type: LLC
     focus: AI consulting and hands-on engineering
-    url: "https://zealot.online"
+    url: "https://zealotanalytics.com"
     status: active
 
 # --- Structured points for LLM prose generation ---
@@ -46,6 +47,11 @@ about:
     - B.Sc. in Electrical and Computer Engineering from Rutgers
     - trajectory from hardware analytics to actuarial to ML engineering to AI agents
     - specializing in agentic AI solutions with LangGraph
+  objective: >
+    A seasoned AI/ML developer and lead data scientist with 7+ years of experience
+    in building and serving AI/ML model pipelines across diverse production settings.
+    Now specializing in agentic AI solutions with LangGraph. Passionate about use cases
+    in the financial services domain.
 
 education:
   - institution: Georgia Institute of Technology
@@ -71,7 +77,7 @@ experience:
   - company: Intact Insurance Specialty Solutions
     contracted_via: Oliver James  # staffing agency
     industry: P&C Insurance
-    role: Staff Data Scientist
+    role: Senior AI/ML Engineer
     years: Apr 2025 - present
     projects:
       - name: "Kismet AI — First Notice of Loss (FNOL) Voice Agent"

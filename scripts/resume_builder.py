@@ -107,8 +107,9 @@ def build_resume(nicholas: dict, dry_run: bool = False) -> tuple[str, str]:
             text=True,
             timeout=60,
         )
-        if result.returncode != 0:
-            # Preserve log for debugging
+        # pdflatex returns non-zero on warnings too; only fail if no PDF produced
+        pdf_path = outputs_dir / "resume.pdf"
+        if result.returncode != 0 and not pdf_path.exists():
             log_path = outputs_dir / "resume.log"
             raise RuntimeError(
                 f"pdflatex pass {pass_num} failed (see {log_path}):\n"

@@ -1,20 +1,13 @@
 #!/usr/bin/env python3
-"""Generate text artifacts from nicholas.yaml.
-
-Reads nicholas.yaml + identity/voice.md + identity/positioning.md,
-calls an LLM to generate text artifacts, writes to outputs/.
+"""Generate artifacts from nicholas.yaml.
 
 Usage:
-    python generate.py                          # generate all (auto-detects provider)
-    python generate.py --only site-content      # generate one
-    python generate.py --only bio-short,bio-long  # comma-separated subset
-    python generate.py --provider anthropic     # use API key instead of Claude Code CLI
-    python generate.py --dry-run                # print prompts without calling LLM
-
-Provider auto-detection priority:
-    1. claude-code CLI (uses Max subscription, no API key needed)
-    2. anthropic API (requires ANTHROPIC_API_KEY)
-    3. openai API (requires OPENAI_API_KEY)
+    python generate.py                          # LLM artifacts only (default)
+    python generate.py --only resume            # generate resume PDF
+    python generate.py --only linkedin-about    # generate LinkedIn About via LLM
+    python generate.py --only linkedin-sync     # sync LinkedIn profile via Playwright
+    python generate.py --all                    # everything: LLM + resume + linkedin
+    python generate.py --dry-run                # preview without executing
 """
 
 import argparse
@@ -303,13 +296,13 @@ def generate_bio_long(nicholas, voice, positioning, call_llm):
     return "outputs/bio-long.md", result.strip() + "\n"
 
 
-def generate_linkedin_draft(nicholas, voice, positioning, call_llm):
+def generate_linkedin_about(nicholas, voice, positioning, call_llm):
     """Generate LinkedIn About section draft."""
     instruction = (
         "Write a LinkedIn About section. First person. 3-4 short paragraphs. "
         "No hashtags, no emoji, no markdown formatting. "
         "Optimize for the 'business audience' guidance in the positioning strategy. "
-        "This is a draft — the user will review before posting."
+        "Professional but not corporate. Mention the consulting practice (Zealot Analytics) naturally."
     )
     system = build_system_prompt(voice, positioning, instruction)
 
@@ -335,20 +328,25 @@ def generate_linkedin_draft(nicholas, voice, positioning, call_llm):
     if call_llm is None:
         print(f"  [dry-run] System prompt ({len(system)} chars)")
         print(f"  [dry-run] User prompt ({len(user)} chars)")
-        return "outputs/linkedin-draft.md", "[dry-run placeholder]"
+        return "outputs/linkedin-about.md", "[dry-run placeholder]"
 
     result = call_llm(system, user)
     header = "<!-- Draft generated from nicholas.yaml — review before posting -->\n\n"
-    return "outputs/linkedin-draft.md", header + result.strip() + "\n"
+    return "outputs/linkedin-about.md", header + result.strip() + "\n"
 
 
 # --- Registry ---
 
+from scripts.resume_builder import run_resume_build
+
 ARTIFACTS = {
-    "site-content": generate_site_content,
-    "bio-short": generate_bio_short,
-    "bio-long": generate_bio_long,
-    "linkedin-draft": generate_linkedin_draft,
+    # LLM artifacts (default targets)
+    "site-content":   {"type": "llm",      "fn": generate_site_content},
+    "bio-short":      {"type": "llm",      "fn": generate_bio_short},
+    "bio-long":       {"type": "llm",      "fn": generate_bio_long},
+    "linkedin-about": {"type": "llm",      "fn": generate_linkedin_about},
+    # Template artifacts (--all or --only)
+    "resume":         {"type": "template", "fn": run_resume_build},
 }
 
 
@@ -371,37 +369,58 @@ def main():
         action="store_true",
         help="Print prompts without calling LLM",
     )
+    parser.add_argument("--all", action="store_true", help="Run all artifacts including resume and linkedin-sync")
     args = parser.parse_args()
 
-    provider = args.provider or os.environ.get("GENERATE_PROVIDER") or detect_provider()
-    print(f"Using provider: {provider}")
-    nicholas, voice, positioning = load_sources()
+    if args.all and args.only:
+        print("Error: --all and --only are mutually exclusive", file=sys.stderr)
+        sys.exit(1)
 
-    # Validate --only names
-    targets = ARTIFACTS
     if args.only:
         names = [n.strip() for n in args.only.split(",")]
+        # Handle deprecation alias
+        if "linkedin-draft" in names:
+            names = ["linkedin-about" if n == "linkedin-draft" else n for n in names]
+            print("Note: 'linkedin-draft' renamed to 'linkedin-about'", file=sys.stderr)
         unknown = [n for n in names if n not in ARTIFACTS]
         if unknown:
             print(f"Error: unknown artifact(s): {', '.join(unknown)}")
             print(f"Available: {', '.join(ARTIFACTS.keys())}")
             sys.exit(1)
-        targets = {k: v for k, v in ARTIFACTS.items() if k in names}
-
-    if not args.dry_run:
-        call_llm = get_client(provider)
+        targets = {k: ARTIFACTS[k] for k in names}
+    elif args.all:
+        targets = ARTIFACTS
     else:
+        # Default: LLM artifacts only
+        targets = {k: v for k, v in ARTIFACTS.items() if v["type"] == "llm"}
+
+    # load_sources() stays unconditional (nicholas is needed by all artifacts)
+    nicholas, voice, positioning = load_sources()
+
+    # Only init LLM if we have LLM targets
+    has_llm_targets = any(entry["type"] == "llm" for entry in targets.values())
+    if has_llm_targets and not args.dry_run:
+        provider = args.provider or os.environ.get("GENERATE_PROVIDER") or detect_provider()
+        print(f"Using provider: {provider}")
+        call_llm = get_client(provider)
+    elif has_llm_targets:
         call_llm = None
+        print("Dry run mode")
+    else:
+        call_llm = None  # Not needed for template/action artifacts
 
     os.makedirs(ROOT / "outputs", exist_ok=True)
     failed = []
 
-    for name, gen_fn in targets.items():
+    for name, entry in targets.items():
         try:
             print(f"Generating {name}...")
-            path, content = gen_fn(nicholas, voice, positioning, call_llm)
-            with open(ROOT / path, "w") as f:
-                f.write(content)
+            if entry["type"] == "llm":
+                path, content = entry["fn"](nicholas, voice, positioning, call_llm)
+                with open(ROOT / path, "w") as f:
+                    f.write(content)
+            else:
+                path, status = entry["fn"](nicholas, args.dry_run)
             print(f"  → {path}")
         except Exception as e:
             print(f"  ✗ {name} failed: {e}", file=sys.stderr)

@@ -1,0 +1,202 @@
+\documentclass[letter,10pt]{article}
+\usepackage[utf8]{inputenc}
+
+%====================
+% OFFICIAL PUBLIC OVERLEAF TEMPLATE
+% https://www.overleaf.com/latex/templates/data-science-tech-resume-template/zcdmpfxrzjhv
+%
+%====================
+%
+% Resume template for data scientists, a complement to data-science-tech-cover-letter-template:
+% https://www.overleaf.com/latex/templates/data-science-tech-cover-letter-template/gbrcqktbsfxf
+%
+% Files:        resume.tex: Main file
+%               _header.tex: header code
+%               TLCresume.sty: style file containing formatting details
+%               section/objective: https://www.indeed.com/career-advice/resumes-cover-letters/resume-objective-examples
+%               section/skills: table of skills
+%               section/experience: projects or roles
+%               section/education: schools and stuff
+%               section/activities: optional, could comment out in resume.tex.
+%
+% Editor:       https://github.com/TimmyChan
+%               https://www.linkedin.com/in/timmy-l-chan/
+%
+% Last Updated: March 24th, 2022
+%
+%====================
+
+
+\usepackage{TLCresume}
+
+%====================
+% CONTACT INFORMATION
+%====================
+\def\name{Nicholas C. Park} % Name Here
+\def\phone{(+1) (201) 708 - 5900}
+\def\city{New York City Metropolitan Area}
+\def\email{nickpark1209@gmail.com}
+\def\LinkedIn{nicholas-c-park} % linkedin.com/in/______
+\def\github{nicholascpark} % github username
+\def\role{Sr. AI Engineer / Lead Data Scientist} % JOB TITLE
+
+%====================
+% Header: Contact
+%====================
+
+\RequirePackage{fancyhdr}
+\fancypagestyle{fancy}{%
+\fancyhf{}
+\lhead{\phone \\ % PHONE
+        \city \\ % city
+	    \href{mailto:\email}{\email}} % EMAIL}
+	\chead{%
+	    \centering {\Huge \skills \name \vspace{.25em}} \\ % feel free to adjust vspace to 0
+	    {\color{highlight} \Large{\role}}}%
+	    \rhead{\bf{U.S. Citizen}\\ % Portfolio
+	    \href{https://github.com/\github}{github.com/\github} \\% Github
+	    \href{https://www.linkedin.com/in/\LinkedIn}{linkedin.com/in/\LinkedIn}} % LinkedIn
+\renewcommand{\headrulewidth}{1pt}% 2pt header rule
+\renewcommand{\headrule}{\hbox to\headwidth{%
+  \color{highlight}\leaders\hrule height \headrulewidth\hfill}}
+}
+\pagestyle{fancy}
+
+\setlength{\headheight}{90pt}
+\setlength{\headsep}{5pt}
+
+\begin{document}
+%====================
+% Objective Statement
+%====================
+\noindent
+A seasoned AI/ML developer and lead data scientist with 7+ years of experience in building and serving AI/ML model pipelines across diverse production settings. Now specializing in agentic AI solutions with LangGraph. Passionate about use cases in the financial services domain.
+
+\section{Education}
+\subsection{{M.Sc. in Computer Science - Machine Learning (GPA: 4.00/4.00)} | \textit{Georgia Institute of Technology} \hfill Sept 2020 - Dec 2022}
+\begin{zitemize}
+\item \normalfont Relevant Coursework: Reinforcement Learning, Deep Learning, Machine Learning, Artificial Intelligence, Deterministic Optimization, Bayesian Statistics, Network Science, Data Analytics, etc.
+\end{zitemize}
+
+\subsection{{B.Sc. in Electrical and Computer Engineering} | \textit{Rutgers, The State University of New Jersey} \hfill Sept 2013 - May 2017}
+\vspace{4mm} % Add space between title and list
+
+\section{Work Experience (By Project Per Organization)}
+%====================
+\subsection{Senior AI/ML Engineer @ Intact Insurance Specialty Solutions (P\&C Insurance; Contracted via Oliver James) \hfill Apr 2025 - present}
+\vspace{0.5em}
+\subtext{\textbf{Kismet AI — First Notice of Loss (FNOL) Voice Agent   (LangGraph, Pydantic, OpenAI Realtime API)}}
+\begin{zitemize}
+\item Won Hackathon Gold Medal for developing a next-generation telephony/chat AI agent that automates claims intake calls using a LangGraph-based multi-agent workflow and OpenAI Realtime API for natural, bidirectional voice conversations with text/image handling for chats.
+\item Designed the agent to handle entire claims intake autonomously via AI-driven data collection — capturing key claims details, validating missing information, and generating formatted claims data — reducing manual effort and errors in early claims processing.
+\item Delivered real-time conversational performance (\textasciitilde{}50-200ms response latency) with empathetic, insurance-specific dialogue flows. Multi-modal: supports voice/text/images.
+\item Business impact: standardized FNOL intake across business lines, accelerated claims triage, enhanced data quality and compliance.
+\end{zitemize}
+
+\subsection{\textbf{\textit{Entity Resolution Platform — Enterprise Account Deduplication   (Splink v4, FastAPI, PostgreSQL)}}}
+\vspace{0.1em}
+\begin{zitemize}
+\item Led end-to-end design and rollout of a company-wide account deduplication platform that identifies and consolidates duplicate submission accounts across business units and upstream systems in real-time.
+\item Productionized a secure, scalable service layer (Bearer-auth FastAPI) with UI-based test harness, async API endpoints, scheduled runs, and run-level audit trails; established SLAs, alerting, and operational playbooks.
+\item Delivered a config-driven, probabilistic fuzzy matching engine with governed outputs (match/uncertain/unmatch) and diagnostics, enabling consistent decisions, reviewer workflows, and seamless export to enterprise data stores.
+\item Business impact: prevents duplicate account creation, accelerates onboarding and reporting, provides auditable "golden records" for downstream applications.
+\end{zitemize}
+
+\subsection{\textbf{\textit{Agentic Document Parsing Workflow — Intelligent Document Processing   (OpenAI GPT-4-turbo, Instabase SDK, LangGraph)}}}
+\vspace{0.1em}
+\begin{zitemize}
+\item Co-architected and productionized a scalable IDP pipeline for insurance submissions (emails, loss runs, applications, Statement of Values) reducing manual touchpoints.
+\item Owned the hybrid OCR strategy across mixed formats/scanned PDFs and Excel files, lifting field-level accuracy and cutting rescans, directly compressing quote turnaround time.
+\item Authored category-specific GPT-4-turbo "refiners" for underwriter-critical fields (business unit, LOB, insured values), raising straight-through processing with prompt patterns and RegEx fallbacks for edge cases.
+\item Drove human-in-the-loop checkpoints with probability thresholds, improving precision/recall to ≥0.90 on priority fields and surfacing audit-ready exceptions for underwriter review.
+\end{zitemize}
+\vspace{0.6em}
+
+%====================
+\subsection{Lead Data Scientist @ ClearOne Advantage (Consumer Debt Relief Services) \hfill Mar 2024 - Apr 2025}
+\vspace{0.5em}
+\subtext{\textbf{Claire AI — Online Chat Agent for Digital Leads   (LangGraph, Pydantic, OpenAI API (gpt-4o), Flask, Docker, AWS Lambda, LangSmith)}}
+\begin{zitemize}
+\item Developed an LLM-based chat agent with LangGraph to facilitate engaging, natural conversations with digital leads on the landing page, enhancing lead conversion rates by 20\%. Designed the conversational flow diagram and employed advanced prompting techniques for sequential action handling.
+\item Tools integration: after structured customer info collection, the agent calls APIs for real-time soft credit pull, Salesforce lead generation, savings estimate calculation, and handoff to human agent via call scheduling API.
+\item Deployment: containerized with Docker, built a Flask API as a websocket for AWS Lambda. Monitored token usage and flow via LangSmith.
+\end{zitemize}
+
+\subsection{\textbf{\textit{Mailer Scoring System v2 — Direct Mail Marketing Campaigns   (Python, AWS, Scikit-Learn, Optuna)}}}
+\vspace{0.1em}
+\begin{zitemize}
+\item Optimized post-model scoring process to incorporate weekly ad-hoc constraints such as state-level quotas and campaign-specific requirements. Achieved up to \$20,000 increase in average enrolled debt.
+\item Enhanced v1 model with newer algorithms, stacking, and integrated feature selection that dynamically tunes feature inclusion concurrently with hyperparameters to reduce overfitting and enhance scalability.
+\item Led seamless transition to a new credit bureau data vendor, developing mapping strategies to preserve model accuracy.
+\end{zitemize}
+
+\pagebreak
+%====================
+\subsection{Senior ML Engineer @ Strategic Financial Solutions (Consumer Debt Relief Services) \hfill Mar 2022 - Feb 2024}
+\vspace{0.5em}
+\subtext{\textbf{Mailer Scoring System v1 — Direct Mail Marketing Campaigns   (Python, Azure Synapse, Scikit-Learn, Spark, Azure Logic Apps, Power Automate)}}
+\begin{zitemize}
+\item Developed an ML scoring system via Scikit-Learn and boosting models to rank and select best customers for direct mail marketing.
+\item Automated scoring: built a customer selection pipeline in Azure Synapse integrating the model to maximize weekly expected enrolled debt — triggered by weekly data buy through Azure Logic Apps and Power Automate.
+\item Continual learning: automated weekly model retraining with feature pre-processing on mature campaign data via Spark notebook-based Synapse pipelines. Engineered new customer features raising mean test AUC by 0.1+.
+\item Integrated automatic fine-tuning in precision@k metric based on the week's budgeted mail volume (Optuna).
+\end{zitemize}
+
+\subsection{\textbf{\textit{Credit Risk Model — Unsecured Consumer Loans   (Python, Scikit-Learn, FastAPI, Docker, Azure Functions)}}}
+\vspace{0.1em}
+\begin{zitemize}
+\item Implemented an ML scoring system for real-time credit risk assessment and pricing — predicting overall probability of default (PD) and 36-month PD term structure to align with fixed income cash flows. Algorithm: survival regression via CoxNet Proportional Hazards.
+\item Implemented a low-latency prediction API using FastAPI, containerized with Docker, deployed on Azure Functions.
+\end{zitemize}
+
+\subsection{\textbf{\textit{Lead Scoring Model — Sales Leads Prioritization   (Python, LightGBM, Scikit-Learn, Docker, Azure Functions, GitHub Actions, Evidently AI)}}}
+\vspace{0.1em}
+\begin{zitemize}
+\item Resulted in 25\% mean lift in debt program enrollment translating to \$10M+ in generated quarterly revenue. Sales system prioritizes leads for fast distribution by experience level of current sales floor.
+\item Developed and deployed ML scoring system for streaming data to predict likelihood of converting incoming sales leads by consuming demographic and financial features in real-time.
+\item Deployed Docker containerized app on Azure Functions via GitHub Actions with schema validation. Monitored via Azure App Insights and Evidently AI.
+\end{zitemize}
+\vspace{0.6em}
+
+%====================
+\subsection{Senior Analytics Engineer @ ZT Systems (acquired by Advanced Micro Devices Inc. (AMD)) \hfill Aug 2017 - Feb 2022}
+\vspace{0.5em}
+\subtext{\textbf{GPU Systems Data Pipeline — Automated Logging and Systematic Data Analysis   (Python, SQL)}}
+\begin{zitemize}
+\item Led development of an automated logger in a 4-person team to record sensor and signal integrity data to improve failure characterization of GPU compute server hardware. Designed symptom compilation process for systematized failure analysis.
+\item Analyzed 10GB of experiment data of signal integrity and GPU benchmark performance (MLPerf/SuperBench) tests on new compute clusters to establish and report system design faults, quality issues, and test software failures.
+\end{zitemize}
+
+\section{Skills}
+\begin{tabular}{p{11em} p{1em} p{43em}}
+\skills{Languages} & & Python, SQL, R, Bash, PowerShell \\
+\skills{AI/ML Frameworks} & & LangGraph, LangChain, FAISS, PyTorch, n8n, Scikit-Learn, HuggingFace Transformers, LightGBM, XGBoost, MLFlow, Azure AI Foundry, AWS SageMaker, GCP Vertex AI Pipelines, Splink, Optuna, Ray \\
+\skills{Data Management} & &  Databricks, Snowflake, Spark, Azure Storage, Azure Synapse, AWS S3, GCP Storage, Apache Airflow \\
+\skills{Deployment \& Monitoring} & & FastAPI, LangSmith, Docker, Kubernetes, GitHub Actions, AWS Lambda, Azure Functions, TensorBoard \\
+\skills{Visual/Reporting} & &  SHAP, Plotly, Matplotlib, Seaborn, Tableau
+\end{tabular}
+
+\vspace{2mm} % Add space between title and list
+
+\section{Advanced Machine Learning Research}
+\subsection{{Reinforcement Learning (Python, TensorFlow) \hfill Mar 2022 - Apr 2022}}
+\begin{zitemize}
+\item \normalfont Implemented MADDPG, a SOTA cooperative multi-agent actor-critic algorithm, under the Google Research Football MARL benchmark environment. Achieved a 20-fold increase in pass success rate, surpassing the win rate of non-cooperative baselines with less than 20\% of their average training time.
+\end{zitemize}
+
+
+\subsection{{NLP (Python, PyTorch, HuggingFace) \hfill Jan 2022 - present}}
+\begin{zitemize}
+\item \normalfont Used adversarial data filtering (AFLite) to remove spurious correlations in Facebook's ANLI dataset, improving accuracy compared to random subsampling before fitting a pre-trained RoBERTa-large model. Achieved competitive classification accuracy after discarding 2/3 of the dataset. \bf{(Manuscript pending conference submission)}
+\end{zitemize}
+
+
+\section{Actuarial Exams (Pre-Associateship in the Casualty Actuarial Society)}
+\begin{zitemize}
+\item Exam P: Probability
+\item Exam FM: Financial Mathematics
+\item Exam IFM: Investments \& Financial Markets (Accredited for Exam ATPA: Advanced Topics in Predictive Analytics)
+\item Exam MAS-I: Modern Actuarial Statistics I
+\end{zitemize}
+
+\end{document}

@@ -338,6 +338,7 @@ def generate_linkedin_about(nicholas, voice, positioning, call_llm):
 # --- Registry ---
 
 from scripts.resume_builder import run_resume_build
+from scripts.linkedin_sync import run_linkedin_sync, check_selectors as check_linkedin_selectors
 
 ARTIFACTS = {
     # LLM artifacts (default targets)
@@ -347,6 +348,8 @@ ARTIFACTS = {
     "linkedin-about": {"type": "llm",      "fn": generate_linkedin_about},
     # Template artifacts (--all or --only)
     "resume":         {"type": "template", "fn": run_resume_build},
+    # Action artifacts (--all or --only)
+    "linkedin-sync":  {"type": "action",   "fn": run_linkedin_sync},
 }
 
 
@@ -370,7 +373,13 @@ def main():
         help="Print prompts without calling LLM",
     )
     parser.add_argument("--all", action="store_true", help="Run all artifacts including resume and linkedin-sync")
+    parser.add_argument("--check-selectors", action="store_true", help="Validate LinkedIn DOM selectors without modifying anything")
     args = parser.parse_args()
+
+    if args.check_selectors:
+        nicholas, _, _ = load_sources()
+        success = check_linkedin_selectors(nicholas)
+        sys.exit(0 if success else 1)
 
     if args.all and args.only:
         print("Error: --all and --only are mutually exclusive", file=sys.stderr)
@@ -414,6 +423,14 @@ def main():
 
     for name, entry in targets.items():
         try:
+            # Dependency check for linkedin-sync
+            if name == "linkedin-sync":
+                about_path = ROOT / "outputs" / "linkedin-about.md"
+                if not about_path.exists() or about_path.stat().st_size == 0:
+                    raise FileNotFoundError(
+                        "outputs/linkedin-about.md not found or empty. "
+                        "Run: python generate.py --only linkedin-about"
+                    )
             print(f"Generating {name}...")
             if entry["type"] == "llm":
                 path, content = entry["fn"](nicholas, voice, positioning, call_llm)

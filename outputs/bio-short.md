@@ -1,1 +1,1 @@
-Staff Data Scientist at Intact Insurance Specialty Solutions, building at the intersection of reinforcement learning, multi-agent systems, and applied AI engineering. I run Zealot Analytics for AI consulting work and spend my independent hours studying how competing pressures between agents sharpen intelligence.
+Senior AI/ML Engineer building reinforcement learning and multi-agent systems, with a through-line from actuarial mathematics to applied AI research at Georgia Tech. I run Zealot Analytics for consulting work where rigorous thinking and practical engineering meet.

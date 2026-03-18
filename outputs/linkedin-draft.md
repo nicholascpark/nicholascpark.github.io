@@ -1,9 +1,9 @@
 <!-- Draft generated from nicholas.yaml — review before posting -->
 
-I spent nine years building production systems — from GPU data pipelines in hardware manufacturing to credit risk models in fintech to AI agents in insurance. The thread connecting all of it: figuring out how to make systems that learn, and making them work at scale.
+I spent the first chapter of my career in actuarial mathematics and hardware analytics, building the quantitative foundations that still inform how I approach every problem. That rigor — the habit of modeling uncertainty, stress-testing assumptions, questioning what the data actually says — turned out to be the through-line connecting everything that came after.
 
-My background is quantitative. Actuarial modeling taught me rigor. A master's in machine learning at Georgia Tech gave me the research depth. But what drives the work now is a specific question: how do competing pressures between agents sharpen intelligence? Reinforcement learning, multi-agent systems, adversarial dynamics — these aren't just technical interests. They're how I think about building things that actually adapt.
+Over nine years I've built production systems across fintech, insurance, and hardware manufacturing. The work has evolved from data pipelines and credit risk models to reinforcement learning and multi-agent AI, but the core question has stayed the same: how do intelligent systems learn to make better decisions under pressure? I'm especially drawn to adversarial dynamics — how competing pressures between agents sharpen intelligence in ways no single-agent system can replicate.
 
-Today I specialize in agentic AI — designing systems where language models reason, act, and coordinate. At Intact Insurance, I architect voice agents, entity resolution platforms, and intelligent document processing workflows. Through Zealot Analytics, I bring that same approach to organizations ready to move from experimentation to production.
+Today I design and build agentic AI solutions — voice agents, document processing workflows, entity resolution platforms — as a Senior AI/ML Engineer at Intact Insurance. I hold an M.Sc. in Computer Science from Georgia Tech, where I studied machine learning with a focus on RL and multi-agent systems. Through Zealot Analytics, my consulting practice, I bring that same research-informed engineering to organizations navigating what AI can actually do for them right now.
 
-Rigorous thinking and practical building have never been separate pursuits for me. They're the same thing done well.
+For me, rigorous thinking and practical building have never been separate pursuits. The best systems come from people who care equally about the math underneath and the thing that ships.

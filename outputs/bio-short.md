@@ -1,1 +1,1 @@
-Senior AI/ML Engineer building reinforcement learning and multi-agent systems, with a through-line from actuarial mathematics to applied AI research at Georgia Tech. I run Zealot Analytics for consulting work where rigorous thinking and practical engineering meet.
+[dry-run placeholder]

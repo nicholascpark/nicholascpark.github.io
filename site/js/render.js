@@ -13,9 +13,7 @@ function isDarkMode() {
 }
 
 // Apply theme immediately to avoid flash
-if (isDarkMode()) {
-  document.documentElement.setAttribute('data-theme', 'dark');
-}
+document.documentElement.setAttribute('data-theme', isDarkMode() ? 'dark' : 'light');
 
 (async function () {
   const root = document.getElementById('root');

@@ -251,8 +251,11 @@ experience:
 skills:
   languages: [Python, SQL, R, Bash, PowerShell]
   ai_ml_frameworks:
-    - LangGraph
-    - LangChain
+    - Claude ADK
+    - Google ADK
+    - DSPy
+    - Agent Lightning
+    - LangGraph/LangChain
     - FAISS
     - PyTorch
     - n8n
@@ -277,6 +280,8 @@ skills:
     - GCP Storage
     - Apache Airflow
   deployment_and_monitoring:
+    - Langfuse
+    - Arize AX
     - FastAPI
     - LangSmith
     - Docker

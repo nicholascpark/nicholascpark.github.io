@@ -1,1 +1,9 @@
-[dry-run placeholder]
+<!-- Draft generated from nicholas.yaml — review before posting -->
+
+I spent the first chapter of my career in actuarial mathematics and production analytics, building systems that had to be right — financial models, risk engines, data pipelines where errors had real consequences. That foundation in rigorous quantitative thinking shaped everything that came after. Over nine years across fintech, insurance, and hardware manufacturing, I learned that the gap between a good model and a working system is where most of the real engineering lives.
+
+Today I build intelligent systems. My focus is agentic AI — autonomous agents that reason, interact, and learn from competing pressures. At Intact Insurance, I architect voice agents, entity resolution platforms, and document processing workflows that operate at enterprise scale. What draws me to this work is not just the engineering challenge but the deeper question underneath it: how do systems — artificial or otherwise — actually learn to make good decisions under uncertainty?
+
+I hold an M.Sc. in Computer Science from Georgia Tech, specializing in machine learning, and my research interests sit at the intersection of reinforcement learning, multi-agent systems, and adversarial dynamics. The thread connecting all of it is a conviction that rigorous thinking and practical building are the same pursuit. Theory that cannot ship is incomplete. Systems built without theory are fragile.
+
+Through Zealot Analytics, my consulting practice, I bring that perspective to organizations navigating the shift to AI. The work ranges from agent architecture and LLM integration to the less glamorous but equally critical problems of data infrastructure and deployment. If you are building something intelligent and want a partner who thinks carefully and ships reliably, that is the work I do.

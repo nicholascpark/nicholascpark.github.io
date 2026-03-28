@@ -1,1 +1,1 @@
-[dry-run placeholder]
+I build reinforcement learning and multi-agent AI systems at Intact Insurance Specialty Solutions, and run Zealot Analytics for AI consulting and hands-on engineering. My work centers on how competing pressures between agents — artificial and otherwise — sharpen intelligence.

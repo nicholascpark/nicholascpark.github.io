@@ -43,7 +43,7 @@
   const faceMat = new THREE.MeshBasicMaterial({
     color: initColor,
     transparent: true,
-    opacity: 0.0075,
+    opacity: 0.0001,
     side: THREE.DoubleSide,
   });
   const faceMesh = new THREE.Mesh(geo, faceMat);

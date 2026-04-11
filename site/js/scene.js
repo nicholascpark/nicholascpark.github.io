@@ -222,13 +222,6 @@
     if (!root) return;
 
     const vw = window.innerWidth;
-
-    // Skip mask on mobile — full-width cutouts create ugly horizontal banding
-    if (vw < 700) {
-      canvas.style.maskImage = 'none';
-      canvas.style.webkitMaskImage = 'none';
-      return;
-    }
     const docH = document.documentElement.scrollHeight;
     const scrollY = window.scrollY;
     const scale = 0.3;

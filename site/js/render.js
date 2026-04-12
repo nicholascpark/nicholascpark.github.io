@@ -5,6 +5,66 @@
  * Dependencies: js-yaml (loaded via CDN in index.html)
  */
 
+const SITE_BREAKPOINTS = {
+  compact: 820,
+  handset: 640,
+};
+
+function computeSiteCapabilities() {
+  var width = window.innerWidth || document.documentElement.clientWidth || 0;
+  var touch = window.matchMedia('(hover: none)').matches ||
+    window.matchMedia('(pointer: coarse)').matches ||
+    (navigator.maxTouchPoints || 0) > 0;
+  var compact = width <= SITE_BREAKPOINTS.compact;
+  var handset = width <= SITE_BREAKPOINTS.handset;
+  var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  return {
+    width: width,
+    touch: touch,
+    compact: compact,
+    handset: handset,
+    reducedMotion: reducedMotion,
+    mobileLite: touch || compact,
+  };
+}
+
+function applySiteCapabilities() {
+  var capabilities = computeSiteCapabilities();
+  var root = document.documentElement;
+
+  root.classList.toggle('is-touch', capabilities.touch);
+  root.classList.toggle('is-compact', capabilities.compact);
+  root.classList.toggle('is-handset', capabilities.handset);
+  root.classList.toggle('is-mobile-lite', capabilities.mobileLite);
+  root.classList.toggle('is-reduced-motion', capabilities.reducedMotion);
+  root.dataset.viewportMode = capabilities.handset ? 'handset' : (capabilities.compact ? 'compact' : 'wide');
+  root.dataset.motionMode = capabilities.mobileLite ? 'lite' : 'full';
+
+  window.__siteCapabilities = capabilities;
+  window.dispatchEvent(new CustomEvent('site:capabilitieschange', { detail: capabilities }));
+  return capabilities;
+}
+
+function getSiteCapabilities() {
+  return window.__siteCapabilities || applySiteCapabilities();
+}
+
+window.getSiteCapabilities = getSiteCapabilities;
+
+var capabilitySyncFrame = 0;
+
+applySiteCapabilities();
+
+window.addEventListener('resize', function () {
+  if (capabilitySyncFrame) return;
+
+  capabilitySyncFrame = requestAnimationFrame(function () {
+    capabilitySyncFrame = 0;
+    applySiteCapabilities();
+  });
+});
+
 /* --- Theme detection --- */
 
 function isDarkMode() {
@@ -12,12 +72,28 @@ function isDarkMode() {
   return localStorage.getItem('theme') === 'dark';
 }
 
+function applyThemeMeta(theme) {
+  var themeColorMeta = document.querySelector('meta[name="theme-color"]');
+  var colorSchemeMeta = document.querySelector('meta[name="color-scheme"]');
+
+  if (themeColorMeta) {
+    themeColorMeta.setAttribute('content', theme === 'dark' ? '#0c0b09' : '#faf9f7');
+  }
+
+  if (colorSchemeMeta) {
+    colorSchemeMeta.setAttribute('content', theme === 'dark' ? 'dark' : 'light');
+  }
+}
+
 // Apply theme immediately to avoid flash
-document.documentElement.setAttribute('data-theme', isDarkMode() ? 'dark' : 'light');
+var initialTheme = isDarkMode() ? 'dark' : 'light';
+document.documentElement.setAttribute('data-theme', initialTheme);
+applyThemeMeta(initialTheme);
+document.documentElement.classList.add('is-loading');
 
 (async function () {
   const root = document.getElementById('root');
-  root.innerHTML = '<p class="loading">Loading...</p>';
+  root.innerHTML = createLoadingShell();
 
   try {
     const [nicholas, siteContent] = await Promise.all([
@@ -41,9 +117,14 @@ document.documentElement.setAttribute('data-theme', isDarkMode() ? 'dark' : 'lig
     initMouseGlow();
     // Subtle content parallax
     initParallax();
+    if (window.rebuildContentMask) window.rebuildContentMask();
+    document.documentElement.classList.remove('is-loading');
+    document.documentElement.classList.remove('has-load-error');
   } catch (err) {
     console.error('Failed to render site:', err);
-    root.innerHTML = '<p class="loading">Failed to load. Please try refreshing.</p>';
+    root.innerHTML = createLoadingShell('Failed to load. Please try refreshing.');
+    document.documentElement.classList.remove('is-loading');
+    document.documentElement.classList.add('has-load-error');
   }
 })();
 
@@ -54,6 +135,19 @@ async function fetchYAML(path) {
   if (!response.ok) throw new Error(`Failed to fetch ${path}: ${response.status}`);
   const text = await response.text();
   return jsyaml.load(text);
+}
+
+function createLoadingShell(message) {
+  var status = message || 'Loading...';
+
+  return [
+    '<div class="loading-shell" role="status" aria-live="polite">',
+    '<p class="loading-name">Nicholas C. Park</p>',
+    '<p class="loading">' + status + '</p>',
+    '<div class="loading-line"></div>',
+    '<div class="loading-line short"></div>',
+    '</div>',
+  ].join('');
 }
 
 /* --- Sacred geometry divider --- */
@@ -157,6 +251,7 @@ function renderHeader(profile) {
     var next = dark ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('theme', next);
+    applyThemeMeta(next);
     setToggleIcon(toggle, next === 'dark');
     if (window.rebuildContentMask) window.rebuildContentMask();
   });
@@ -250,15 +345,34 @@ function renderFooter(profile) {
 
   // Update coordinates from scene.js CSS custom properties
   // Read from .style directly (not getComputedStyle) to avoid forced recalc
+  var coordLoopId = 0;
+
   function updateCoords() {
+    coordLoopId = 0;
+
+    if (getSiteCapabilities().mobileLite) {
+      coords.hidden = true;
+      return;
+    }
+
+    coords.hidden = false;
     var s = document.documentElement.style;
     var rx = s.getPropertyValue('--dodeca-rx') || '0.0';
     var ry = s.getPropertyValue('--dodeca-ry') || '0.0';
     var rz = s.getPropertyValue('--dodeca-rz') || '0.0';
     coords.textContent = '\u25CB x: ' + rx.trim() + '\u00B0  y: ' + ry.trim() + '\u00B0  z: ' + rz.trim() + '\u00B0';
-    requestAnimationFrame(updateCoords);
+    coordLoopId = requestAnimationFrame(updateCoords);
   }
-  requestAnimationFrame(updateCoords);
+
+  window.addEventListener('site:capabilitieschange', function () {
+    if (coordLoopId) {
+      cancelAnimationFrame(coordLoopId);
+      coordLoopId = 0;
+    }
+    updateCoords();
+  });
+
+  updateCoords();
 
   return footer;
 }
@@ -296,7 +410,7 @@ function typewrite(el, text, speed) {
   el.classList.add('typing');
 
   // Respect reduced motion preference
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (getSiteCapabilities().reducedMotion || getSiteCapabilities().mobileLite) {
     el.textContent = text;
     el.classList.remove('typing');
     return;
@@ -316,6 +430,7 @@ function typewrite(el, text, speed) {
 
 function initScrollReveals() {
   const revealEls = document.querySelectorAll('.reveal, .reveal-stagger');
+  const capabilities = getSiteCapabilities();
 
   const observer = new IntersectionObserver(
     (entries) => {
@@ -326,7 +441,10 @@ function initScrollReveals() {
         }
       });
     },
-    { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+    {
+      threshold: capabilities.mobileLite ? 0.08 : 0.15,
+      rootMargin: capabilities.mobileLite ? '0px 0px -20px 0px' : '0px 0px -40px 0px',
+    }
   );
 
   revealEls.forEach((el) => observer.observe(el));
@@ -335,7 +453,7 @@ function initScrollReveals() {
 /* --- Mouse proximity glow + click gleam --- */
 
 function initMouseGlow() {
-  if (window.matchMedia('(hover: none)').matches) return;
+  if (getSiteCapabilities().touch) return;
 
   // Create viewport-wide glow overlay
   var glow = document.createElement('div');
@@ -364,15 +482,26 @@ function initMouseGlow() {
 /* --- Subtle content parallax --- */
 
 function initParallax() {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
   var titles = document.querySelectorAll('.section-title');
   var ticking = false;
+
+  function resetTransforms() {
+    titles.forEach(function (el) {
+      el.style.transform = '';
+    });
+  }
 
   window.addEventListener('scroll', function () {
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(function () {
+      var capabilities = getSiteCapabilities();
+      if (capabilities.reducedMotion || capabilities.mobileLite) {
+        resetTransforms();
+        ticking = false;
+        return;
+      }
+
       var vh = window.innerHeight;
       titles.forEach(function (el) {
         var rect = el.getBoundingClientRect();
@@ -382,6 +511,12 @@ function initParallax() {
       ticking = false;
     });
   }, { passive: true });
+
+  window.addEventListener('site:capabilitieschange', function (event) {
+    if (event.detail.mobileLite || event.detail.reducedMotion) {
+      resetTransforms();
+    }
+  });
 }
 
 /* --- Theme toggle icons (SVG) --- */
@@ -399,7 +534,7 @@ function setToggleIcon(btn, isDark) {
 /* --- Load ripple — liquid glass wave from toggle --- */
 
 function spawnLoadRipple(toggle) {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (getSiteCapabilities().reducedMotion || getSiteCapabilities().mobileLite) return;
 
   var rect = toggle.getBoundingClientRect();
   var cx = rect.left + rect.width / 2;

@@ -7,19 +7,52 @@
  */
 
 (function () {
+  function readSiteCapabilities() {
+    if (window.getSiteCapabilities) return window.getSiteCapabilities();
+
+    var width = window.innerWidth || document.documentElement.clientWidth || 0;
+    var touch = window.matchMedia('(hover: none)').matches ||
+      window.matchMedia('(pointer: coarse)').matches ||
+      (navigator.maxTouchPoints || 0) > 0;
+    var compact = width <= 820;
+    var handset = width <= 640;
+    var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    return {
+      width: width,
+      touch: touch,
+      compact: compact,
+      handset: handset,
+      reducedMotion: reducedMotion,
+      mobileLite: touch || compact,
+    };
+  }
+
+  function getScenePixelRatio(capabilities) {
+    var cap = capabilities.mobileLite ? 1.25 : 2;
+    return Math.min(window.devicePixelRatio || 1, cap);
+  }
+
+  var capabilities = readSiteCapabilities();
+  var mobileLite = capabilities.mobileLite;
+  var prefersReducedMotion = capabilities.reducedMotion;
+  var useContentMask = !mobileLite && !prefersReducedMotion;
+  var baseRotationSpeed = mobileLite ? 0.00135 : 0.002;
+
   const scene = new THREE.Scene();
 
   const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
   camera.position.z = 6;
 
-  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: !mobileLite });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(getScenePixelRatio(capabilities));
   renderer.setClearColor(0x000000, 0);
 
   const canvas = renderer.domElement;
   canvas.id = 'scene-canvas';
   canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;';
+  canvas.dataset.mode = mobileLite ? 'lite' : 'full';
   document.body.prepend(canvas);
 
   /* --- Dodecahedron group --- */
@@ -95,12 +128,11 @@
 
 
   /* --- Penrose tessellation entrance --- */
-  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var tessGroup = new THREE.Group();
   scene.add(tessGroup);
   var shards = [];
 
-  if (!prefersReducedMotion && typeof generatePenroseTiling === 'function') {
+  if (!prefersReducedMotion && !mobileLite && typeof generatePenroseTiling === 'function') {
     // No exclusion zone — tiles cover everything including the center.
     // Inner tiles (within dodecahedron projection) fade out as 3D form emerges.
     var tiling = generatePenroseTiling({
@@ -198,26 +230,43 @@
   let targetMouseX = 0;
   let targetMouseY = 0;
 
-  document.addEventListener('mousemove', (e) => {
-    targetMouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-    targetMouseY = (e.clientY / window.innerHeight - 0.5) * 2;
-  });
+  if (!capabilities.touch) {
+    document.addEventListener('mousemove', (e) => {
+      targetMouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+      targetMouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+    });
+  }
 
   /* --- Scroll tracking --- */
   let scrollProgress = 0;
   window.addEventListener('scroll', () => {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     scrollProgress = maxScroll > 0 ? window.scrollY / maxScroll : 0;
-  });
+  }, { passive: true });
 
   /* --- Content-aware opacity mask --- */
   const maskCanvas = document.createElement('canvas');
   const maskCtx = maskCanvas.getContext('2d');
-  let prevMaskUrl = null;
 
   const MASK_SELECTORS = '.site-header, .section-prose, .section-title, .interests-list li, .projects-list li, .links-row, .site-footer p';
 
+  function clearContentMask() {
+    canvas.style.maskImage = 'none';
+    canvas.style.webkitMaskImage = 'none';
+    canvas.style.maskSize = '';
+    canvas.style.webkitMaskSize = '';
+    canvas.style.maskRepeat = '';
+    canvas.style.webkitMaskRepeat = '';
+    canvas.style.maskPosition = '';
+    canvas.style.webkitMaskPosition = '';
+  }
+
   function buildContentMask() {
+    if (!useContentMask) {
+      clearContentMask();
+      return;
+    }
+
     const root = document.getElementById('root');
     if (!root) return;
 
@@ -266,6 +315,7 @@
   }
 
   function updateMaskScroll() {
+    if (!useContentMask) return;
     var y = -window.scrollY;
     canvas.style.maskPosition = '0px ' + y + 'px';
     canvas.style.webkitMaskPosition = canvas.style.maskPosition;
@@ -273,18 +323,50 @@
 
   window.addEventListener('scroll', updateMaskScroll, { passive: true });
   window.addEventListener('resize', function () {
-    requestAnimationFrame(buildContentMask);
+    if (useContentMask) requestAnimationFrame(buildContentMask);
   });
-  setTimeout(buildContentMask, 400);
+  if (useContentMask) {
+    setTimeout(buildContentMask, 100);
+  } else {
+    clearContentMask();
+  }
   window.rebuildContentMask = function () {
+    if (!useContentMask) {
+      clearContentMask();
+      return;
+    }
+
     setTimeout(buildContentMask, 50);
   };
+
+  function refreshSceneCapabilities(nextCapabilities) {
+    capabilities = nextCapabilities || readSiteCapabilities();
+    mobileLite = capabilities.mobileLite;
+    prefersReducedMotion = capabilities.reducedMotion;
+    useContentMask = !mobileLite && !prefersReducedMotion;
+    baseRotationSpeed = mobileLite ? 0.00135 : 0.002;
+    renderer.setPixelRatio(getScenePixelRatio(capabilities));
+    canvas.dataset.mode = mobileLite ? 'lite' : 'full';
+
+    if (mobileLite || capabilities.touch) {
+      targetMouseX = 0;
+      targetMouseY = 0;
+    }
+
+    if (useContentMask) requestAnimationFrame(buildContentMask);
+    else clearContentMask();
+  }
 
   /* --- Resize --- */
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    refreshSceneCapabilities();
+  });
+
+  window.addEventListener('site:capabilitieschange', function (event) {
+    refreshSceneCapabilities(event.detail);
   });
 
   /* --- Entrance animation --- */
@@ -315,18 +397,47 @@
   }
 
   /* --- Animation loop --- */
-  const baseRotationSpeed = 0.002;
   let time = 0;
   let lastTimestamp = 0;
+  let lastRenderedTimestamp = 0;
+  let processedFrameCount = 0;
+  let animationFrameId = 0;
+
+  function queueNextFrame() {
+    if (!animationFrameId && !document.hidden) {
+      animationFrameId = requestAnimationFrame(animate);
+    }
+  }
+
+  function stopAnimationLoop() {
+    if (!animationFrameId) return;
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = 0;
+  }
+
+  function startAnimationLoop() {
+    lastTimestamp = 0;
+    lastRenderedTimestamp = 0;
+    processedFrameCount = 0;
+    queueNextFrame();
+  }
 
   function animate(timestamp) {
-    requestAnimationFrame(animate);
+    animationFrameId = 0;
+    queueNextFrame();
+
+    if (mobileLite && lastRenderedTimestamp && timestamp - lastRenderedTimestamp < (1000 / 30)) {
+      return;
+    }
+
+    lastRenderedTimestamp = timestamp;
 
     if (!lastTimestamp) lastTimestamp = timestamp;
     var dt = Math.min((timestamp - lastTimestamp) / 1000, 0.05); // cap dt
     lastTimestamp = timestamp;
 
-    time += 0.01;
+    time += dt * 0.6;
+    processedFrameCount += 1;
 
     // --- Entrance progress ---
     entranceElapsed += dt;
@@ -353,35 +464,41 @@
       // Awaken: rotation ramps up from 0 to normal
       var awakenT = Math.min(shatterProgress, 1);
       var rotScale = awakenT; // 0→1 during shatter
-      group.rotation.x = (time * baseRotationSpeed * 0.7 + mouseY * 0.3 + scrollProgress * Math.PI * 0.5) * rotScale;
-      group.rotation.y = (time * baseRotationSpeed + mouseX * 0.3 + scrollProgress * Math.PI * 0.3) * rotScale;
-      group.rotation.z = (time * baseRotationSpeed * 0.3) * rotScale;
+      var mouseInfluence = capabilities.touch ? 0 : (mobileLite ? 0.16 : 0.3);
+      var scrollInfluenceX = mobileLite ? Math.PI * 0.28 : Math.PI * 0.5;
+      var scrollInfluenceY = mobileLite ? Math.PI * 0.18 : Math.PI * 0.3;
+      group.rotation.x = (time * baseRotationSpeed * 0.7 + mouseY * mouseInfluence + scrollProgress * scrollInfluenceX) * rotScale;
+      group.rotation.y = (time * baseRotationSpeed + mouseX * mouseInfluence + scrollProgress * scrollInfluenceY) * rotScale;
+      group.rotation.z = (time * baseRotationSpeed * (mobileLite ? 0.18 : 0.3)) * rotScale;
     }
 
     // Billboard pentagons
-    const camQuat = camera.quaternion;
-    uniqueVertices.forEach((v, i) => {
-      dummy.position.set(v.x, v.y, v.z);
-      dummy.position.applyMatrix4(group.matrixWorld);
-
-      var depthZ = dummy.position.z;
-      var depthScale = THREE.MathUtils.clamp(
-        THREE.MathUtils.mapLinear(depthZ, -3.5, 3.5, 0.6, 1.3),
-        0.6, 1.3
-      );
-
-      dummy.position.set(v.x, v.y, v.z);
+    if (!mobileLite || processedFrameCount % 2 === 0) {
+      const camQuat = camera.quaternion;
       const invGroupQuat = group.quaternion.clone().invert();
-      dummy.quaternion.copy(camQuat).premultiply(invGroupQuat);
-      dummy.scale.setScalar(depthScale);
-      dummy.updateMatrix();
-      pentMesh.setMatrixAt(i, dummy.matrix);
-    });
-    pentMesh.instanceMatrix.needsUpdate = true;
+
+      uniqueVertices.forEach((v, i) => {
+        dummy.position.set(v.x, v.y, v.z);
+        dummy.position.applyMatrix4(group.matrixWorld);
+
+        var depthZ = dummy.position.z;
+        var depthScale = mobileLite ? 0.92 : THREE.MathUtils.clamp(
+          THREE.MathUtils.mapLinear(depthZ, -3.5, 3.5, 0.6, 1.3),
+          0.6, 1.3
+        );
+
+        dummy.position.set(v.x, v.y, v.z);
+        dummy.quaternion.copy(camQuat).premultiply(invGroupQuat);
+        dummy.scale.setScalar(depthScale);
+        dummy.updateMatrix();
+        pentMesh.setMatrixAt(i, dummy.matrix);
+      });
+      pentMesh.instanceMatrix.needsUpdate = true;
+    }
 
     // Human breathing
     var breatheEased = breathe(time / 0.6);
-    var breatheScale = 0.900 + breatheEased * 0.115;
+    var breatheScale = (mobileLite ? 0.925 : 0.900) + breatheEased * (mobileLite ? 0.08 : 0.115);
 
     // Scale logic:
     //   Hold: 0 → CONTAINED_SCALE (grows from center of tiling)
@@ -404,9 +521,9 @@
     // Shatter: glow fades as it becomes the normal subtle wireframe
     var glowIntensity = settled ? 0 : (inShatter ? (1 - shatterProgress) : 1);
 
-    var baseEdgeOpacity = 0.6 + Math.sin(time * 0.3) * 0.15;
+    var baseEdgeOpacity = (mobileLite ? 0.5 : 0.6) + Math.sin(time * 0.3) * (mobileLite ? 0.08 : 0.15);
     edgeMat.opacity = baseEdgeOpacity + glowIntensity * (1.0 - baseEdgeOpacity);
-    faceMat.opacity = 0.0075 + glowIntensity * 0.075;
+    faceMat.opacity = (mobileLite ? 0.003 : 0.0075) + glowIntensity * (mobileLite ? 0.03 : 0.075);
 
     // --- Tessellation shatter animation ---
     if (shards.length > 0 && !tessellationCleanedUp) {
@@ -517,5 +634,15 @@
     renderer.render(scene, camera);
   }
 
-  requestAnimationFrame(animate);
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      stopAnimationLoop();
+      return;
+    }
+
+    refreshSceneCapabilities();
+    startAnimationLoop();
+  });
+
+  startAnimationLoop();
 })();

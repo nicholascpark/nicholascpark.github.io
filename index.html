@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Nicholas C. Park</title>
   <meta name="description" content="Software engineer, AI researcher, and founder. Reinforcement learning, multi-agent systems, and applied cognition.">
   <meta name="theme-color" content="#faf9f7">
@@ -10,7 +10,10 @@
   <link rel="stylesheet" href="site/css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="preload" href="nicholas.yaml" as="fetch" crossorigin>
+  <link rel="preload" href="outputs/site-content.yaml" as="fetch" crossorigin>
 </head>
 <body>
   <div id="root">
@@ -25,11 +28,13 @@
       </div>
     </noscript>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-  <script src="site/js/breathe.js"></script>
-  <script src="site/js/penrose.js"></script>
-  <script src="site/js/scene.js"></script>
+  <!-- Content renders first — no waiting for Three.js -->
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <script src="site/js/render.js"></script>
+  <!-- 3D scene loads after content is visible -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" defer></script>
+  <script src="site/js/breathe.js" defer></script>
+  <script src="site/js/penrose.js" defer></script>
+  <script src="site/js/scene.js" defer></script>
 </body>
 </html>

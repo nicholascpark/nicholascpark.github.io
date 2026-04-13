@@ -38,6 +38,39 @@
   var prefersReducedMotion = capabilities.reducedMotion;
   var useContentMask = !mobileLite && !prefersReducedMotion;
   var baseRotationSpeed = mobileLite ? 0.00135 : 0.002;
+  const DEFAULT_CONTAINED_SCALE = 0.78;
+  var sceneScaleProfile = getSceneScaleProfile(capabilities);
+
+  function getSceneScaleProfile(currentCapabilities) {
+    if (!currentCapabilities.mobileLite) {
+      return {
+        contained: DEFAULT_CONTAINED_SCALE,
+        settleBase: 0.9,
+        breatheAmplitude: 0.115,
+      };
+    }
+
+    var root = document.getElementById('root');
+    var viewportWidth = Math.max(window.innerWidth || 1, 1);
+    var rootWidth = root
+      ? root.getBoundingClientRect().width
+      : Math.min(viewportWidth - 32, 680);
+    var widthRatio = THREE.MathUtils.clamp(rootWidth / viewportWidth, 0.72, 0.94);
+
+    var contained = currentCapabilities.handset
+      ? THREE.MathUtils.clamp(widthRatio * 0.7, 0.58, 0.66)
+      : THREE.MathUtils.clamp(widthRatio * 0.86, 0.66, 0.75);
+
+    var settleBase = currentCapabilities.handset
+      ? THREE.MathUtils.clamp(contained + 0.04, 0.62, 0.7)
+      : THREE.MathUtils.clamp(contained + 0.05, 0.72, 0.82);
+
+    return {
+      contained: contained,
+      settleBase: settleBase,
+      breatheAmplitude: currentCapabilities.handset ? 0.04 : 0.065,
+    };
+  }
 
   const scene = new THREE.Scene();
 
@@ -345,6 +378,7 @@
     prefersReducedMotion = capabilities.reducedMotion;
     useContentMask = !mobileLite && !prefersReducedMotion;
     baseRotationSpeed = mobileLite ? 0.00135 : 0.002;
+    sceneScaleProfile = getSceneScaleProfile(capabilities);
     renderer.setPixelRatio(getScenePixelRatio(capabilities));
     canvas.dataset.mode = mobileLite ? 'lite' : 'full';
 
@@ -375,7 +409,6 @@
   // Phase 3:           Original breathing, tessellation gone
   const HOLD_DURATION = 1.5;        // phase 1: frozen sacred pattern
   const SHATTER_DURATION = 2.0;     // phase 2: shatter + awaken
-  const CONTAINED_SCALE = 0.78;     // fits within viewport during hold
   let entranceElapsed = prefersReducedMotion ? (HOLD_DURATION + SHATTER_DURATION) : 0;
   var tessellationCleanedUp = prefersReducedMotion;
 
@@ -498,11 +531,11 @@
 
     // Human breathing
     var breatheEased = breathe(time / 0.6);
-    var breatheScale = (mobileLite ? 0.925 : 0.900) + breatheEased * (mobileLite ? 0.08 : 0.115);
+    var breatheScale = sceneScaleProfile.settleBase + breatheEased * sceneScaleProfile.breatheAmplitude;
 
     // Scale logic:
-    //   Hold: 0 → CONTAINED_SCALE (grows from center of tiling)
-    //   Shatter: CONTAINED_SCALE → original breatheScale (awakening)
+    //   Hold: 0 → contained scale (grows from center of tiling)
+    //   Shatter: contained scale → original breatheScale (awakening)
     //   Settled: original breatheScale (normal)
     var holdT = Math.min(entranceElapsed / HOLD_DURATION, 1);
     var holdProgress = entranceEase(holdT);
@@ -510,9 +543,9 @@
     if (settled) {
       finalScale = breatheScale;
     } else if (inShatter) {
-      finalScale = CONTAINED_SCALE + (breatheScale - CONTAINED_SCALE) * shatterProgress;
+      finalScale = sceneScaleProfile.contained + (breatheScale - sceneScaleProfile.contained) * shatterProgress;
     } else {
-      finalScale = CONTAINED_SCALE * holdProgress;
+      finalScale = sceneScaleProfile.contained * holdProgress;
     }
     group.scale.setScalar(finalScale);
 
@@ -532,7 +565,7 @@
         // gradually displacing inner tiles as it expands through them.
         var tessGlow = 0.7 + Math.sin(time * 1.5) * 0.15;
         // Current dodecahedron radius in world space
-        var currentRadius = 3.16 * CONTAINED_SCALE * holdProgress;
+        var currentRadius = 3.16 * sceneScaleProfile.contained * holdProgress;
         for (var si = 0; si < shards.length; si++) {
           var s = shards[si];
           if (s.inner && s.dist < currentRadius) {

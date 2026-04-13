@@ -105,7 +105,7 @@
   const edgeMat = new THREE.LineBasicMaterial({
     color: initColor,
     transparent: true,
-    opacity: 0.7,
+    opacity: 0.55,
   });
   const wireframe = new THREE.LineSegments(edgeGeo, edgeMat);
   group.add(wireframe);
@@ -559,7 +559,7 @@
     // Shatter: glow fades as it becomes the normal subtle wireframe
     var glowIntensity = settled ? 0 : (inShatter ? (1 - shatterProgress) : 1);
 
-    var baseEdgeOpacity = (mobileLite ? 0.5 : 0.6) + Math.sin(time * 0.3) * (mobileLite ? 0.08 : 0.15);
+    var baseEdgeOpacity = (mobileLite ? 0.4 : 0.5) + Math.sin(time * 0.3) * (mobileLite ? 0.06 : 0.11);
     edgeMat.opacity = baseEdgeOpacity + glowIntensity * (1.0 - baseEdgeOpacity);
     faceMat.opacity = (mobileLite ? 0.003 : 0.0075) + glowIntensity * (mobileLite ? 0.03 : 0.075);
 

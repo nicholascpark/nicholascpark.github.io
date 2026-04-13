@@ -67,9 +67,24 @@ window.addEventListener('resize', function () {
 
 /* --- Theme detection --- */
 
+function getStoredTheme() {
+  var storedTheme = localStorage.getItem('theme');
+  return storedTheme === 'dark' || storedTheme === 'light'
+    ? storedTheme
+    : null;
+}
+
+function shouldUseMobileThemeDefault() {
+  var capabilities = getSiteCapabilities();
+  return capabilities.handset || (capabilities.touch && capabilities.compact);
+}
+
 function isDarkMode() {
-  // Default to light — only dark if explicitly chosen
-  return localStorage.getItem('theme') === 'dark';
+  var storedTheme = getStoredTheme();
+  if (storedTheme) return storedTheme === 'dark';
+
+  // Mobile defaults dark; larger non-touch layouts keep the original light default.
+  return shouldUseMobileThemeDefault();
 }
 
 function applyThemeMeta(theme) {

@@ -65,10 +65,15 @@
       ? THREE.MathUtils.clamp(contained + 0.04, 0.62, 0.7)
       : THREE.MathUtils.clamp(contained + 0.05, 0.72, 0.82);
 
+    var breatheAmplitude = currentCapabilities.handset ? 0.04 : 0.065;
+    var breatheRangeBoost = currentCapabilities.handset ? 0.018 : 0.014;
+
     return {
       contained: contained,
-      settleBase: settleBase,
-      breatheAmplitude: currentCapabilities.handset ? 0.04 : 0.065,
+      // Keep the same maximum radius on mobile, but let the form contract more
+      // between breaths so the breathing reads more clearly on small screens.
+      settleBase: settleBase - breatheRangeBoost,
+      breatheAmplitude: breatheAmplitude + breatheRangeBoost,
     };
   }
 

@@ -36,7 +36,7 @@
   var capabilities = readSiteCapabilities();
   var mobileLite = capabilities.mobileLite;
   var prefersReducedMotion = capabilities.reducedMotion;
-  var useContentMask = !mobileLite && !prefersReducedMotion;
+  var useContentMask = !prefersReducedMotion;
   var baseRotationSpeed = mobileLite ? 0.00135 : 0.002;
   const DEFAULT_CONTAINED_SCALE = 0.78;
   var sceneScaleProfile = getSceneScaleProfile(capabilities);
@@ -381,7 +381,7 @@
     capabilities = nextCapabilities || readSiteCapabilities();
     mobileLite = capabilities.mobileLite;
     prefersReducedMotion = capabilities.reducedMotion;
-    useContentMask = !mobileLite && !prefersReducedMotion;
+    useContentMask = !prefersReducedMotion;
     baseRotationSpeed = mobileLite ? 0.00135 : 0.002;
     sceneScaleProfile = getSceneScaleProfile(capabilities);
     renderer.setPixelRatio(getScenePixelRatio(capabilities));

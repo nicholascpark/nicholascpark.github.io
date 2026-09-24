@@ -73,17 +73,9 @@ function getStoredTheme() {
     : null;
 }
 
-function shouldUseMobileThemeDefault() {
-  var capabilities = getSiteCapabilities();
-  return capabilities.handset || (capabilities.touch && capabilities.compact);
-}
-
 function isDarkMode() {
-  var storedTheme = getStoredTheme();
-  if (storedTheme) return storedTheme === 'dark';
-
-  // Mobile defaults dark; larger non-touch layouts keep the original light default.
-  return shouldUseMobileThemeDefault();
+  // Default to dark on every device while honoring an explicit light preference.
+  return getStoredTheme() !== 'light';
 }
 
 function applyThemeMeta(theme) {

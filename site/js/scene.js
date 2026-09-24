@@ -36,7 +36,8 @@
   var capabilities = readSiteCapabilities();
   var mobileLite = capabilities.mobileLite;
   var prefersReducedMotion = capabilities.reducedMotion;
-  var useContentMask = !prefersReducedMotion;
+  // Preserve text legibility for both animated and static backgrounds.
+  var useContentMask = true;
   var baseRotationSpeed = mobileLite ? 0.00135 : 0.002;
   const DEFAULT_CONTAINED_SCALE = 0.78;
   var sceneScaleProfile = getSceneScaleProfile(capabilities);
@@ -381,7 +382,7 @@
     capabilities = nextCapabilities || readSiteCapabilities();
     mobileLite = capabilities.mobileLite;
     prefersReducedMotion = capabilities.reducedMotion;
-    useContentMask = !prefersReducedMotion;
+    useContentMask = true;
     baseRotationSpeed = mobileLite ? 0.00135 : 0.002;
     sceneScaleProfile = getSceneScaleProfile(capabilities);
     renderer.setPixelRatio(getScenePixelRatio(capabilities));
@@ -394,6 +395,7 @@
 
     if (useContentMask) requestAnimationFrame(buildContentMask);
     else clearContentMask();
+    queueNextFrame();
   }
 
   /* --- Resize --- */
@@ -462,9 +464,9 @@
 
   function animate(timestamp) {
     animationFrameId = 0;
-    queueNextFrame();
+    if (!prefersReducedMotion) queueNextFrame();
 
-    if (mobileLite && lastRenderedTimestamp && timestamp - lastRenderedTimestamp < (1000 / 30)) {
+    if (!prefersReducedMotion && mobileLite && lastRenderedTimestamp && timestamp - lastRenderedTimestamp < (1000 / 30)) {
       return;
     }
 
@@ -474,11 +476,11 @@
     var dt = Math.min((timestamp - lastTimestamp) / 1000, 0.05); // cap dt
     lastTimestamp = timestamp;
 
-    time += dt * 0.6;
+    time = prefersReducedMotion ? 0 : time + dt * 0.6;
     processedFrameCount += 1;
 
     // --- Entrance progress ---
-    entranceElapsed += dt;
+    entranceElapsed = prefersReducedMotion ? HOLD_DURATION + SHATTER_DURATION : entranceElapsed + dt;
     var totalDuration = HOLD_DURATION + SHATTER_DURATION;
     var inHold = entranceElapsed < HOLD_DURATION;
     var inShatter = entranceElapsed >= HOLD_DURATION && entranceElapsed < totalDuration;
@@ -493,7 +495,7 @@
     mouseY += (targetMouseY - mouseY) * 0.05;
 
     // Rotation: FROZEN during hold, awakens during shatter, normal after
-    if (inHold) {
+    if (inHold || prefersReducedMotion) {
       // Sacred geometry — perfectly still
       group.rotation.x = 0;
       group.rotation.y = 0;
@@ -511,7 +513,7 @@
     }
 
     // Billboard pentagons
-    if (!mobileLite || processedFrameCount % 2 === 0) {
+    if (prefersReducedMotion || !mobileLite || processedFrameCount % 2 === 0) {
       const camQuat = camera.quaternion;
       const invGroupQuat = group.quaternion.clone().invert();
 
@@ -682,5 +684,6 @@
     startAnimationLoop();
   });
 
+  window.addEventListener('site:themechange', queueNextFrame);
   startAnimationLoop();
 })();

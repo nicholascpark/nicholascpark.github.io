@@ -10,7 +10,7 @@
   --color-bg-deep:       #f3f1ed;
 
   /* Gold accents — muted for light theme */
-  --color-gold:          #a08540;
+  --color-gold:          #806b35;
   --color-gold-bright:   #c9a84c;
   --color-gold-dim:      #8a8578;
   --color-gold-faint:    rgba(74, 70, 64, 0.06);
@@ -18,7 +18,7 @@
   /* Text hierarchy */
   --color-text:          #2c2a26;
   --color-text-bright:   #1a1815;
-  --color-text-muted:    #7a7568;
+  --color-text-muted:    #696457;
   --color-text-dim:      #b0a998;
 
   /* Borders & lines — platinum to match dodecahedron */
@@ -52,7 +52,7 @@
 
   --color-text:          #d8d2c4;
   --color-text-bright:   #f0ebe0;
-  --color-text-muted:    #8a8578;
+  --color-text-muted:    #aaa392;
   --color-text-dim:      #5a5548;
 
   --color-border:        rgba(201, 168, 76, 0.12);
@@ -100,10 +100,10 @@
   background: none;
   border: 1.5px solid var(--color-border-strong);
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   cursor: pointer;
-  color: var(--color-text-dim);
+  color: var(--color-text-muted);
   font-size: 0.8rem;
   display: flex;
   align-items: center;
@@ -583,7 +583,7 @@ button:focus-visible {
 
 .site-footer p {
   font-size: 0.78rem;
-  color: var(--color-text-dim);
+  color: var(--color-text-muted);
   letter-spacing: 0.03em;
 }
 
@@ -720,8 +720,8 @@ html.is-compact .site-header .tagline {
 }
 
 html.is-compact .theme-toggle {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   top: 0;
   background: linear-gradient(180deg, var(--surface-strong), var(--surface-soft));
   box-shadow: 0 14px 28px var(--shadow-soft);
@@ -916,6 +916,14 @@ html.is-handset .project-tagline {
 /* --- Reduced motion --- */
 
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  #cursor-glow, .click-gleam, .load-ripple { display: none; }
+  .reveal, .reveal-stagger > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
   .tagline.typing::after {
     display: none;
   }

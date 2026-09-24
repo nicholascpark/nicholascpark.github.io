@@ -53,6 +53,7 @@ window.getSiteCapabilities = getSiteCapabilities;
 var capabilitySyncFrame = 0;
 
 applySiteCapabilities();
+window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', applySiteCapabilities);
 
 window.addEventListener('resize', function () {
   if (capabilitySyncFrame) return;
@@ -111,15 +112,17 @@ document.documentElement.classList.add('is-loading');
   try {
     const nicholas = await fetchProfile('site/profile.json');
     const siteContent = nicholas;
+    document.title = nicholas.name;
+    document.querySelector('meta[name="description"]').setAttribute('content', nicholas.description);
 
     root.innerHTML = '';
     root.appendChild(wrapGlass(renderHeader(nicholas), 'glass-card-header'));
     root.appendChild(createSacredDivider());
     root.appendChild(wrapGlass(renderAbout(siteContent)));
     root.appendChild(createSacredDivider());
-    root.appendChild(wrapGlass(renderInterests(nicholas)));
-    root.appendChild(createSacredDivider());
     root.appendChild(wrapGlass(renderProjects(nicholas)));
+    root.appendChild(createSacredDivider());
+    root.appendChild(wrapGlass(renderInterests(nicholas)));
     root.appendChild(renderFooter(nicholas));
 
     // Scroll-triggered reveals
@@ -201,27 +204,15 @@ function createSacredDivider() {
 /* --- Render functions --- */
 
 function renderHeader(profile) {
-  const header = el('header', 'site-header reveal');
+  const header = el('header', 'site-header');
 
   header.appendChild(elText('h1', profile.name));
 
-  // Tagline — typed in after header reveals
-  const TAGLINE_TEXT = profile.tagline;
-  const tagline = el('p', 'tagline');
-  tagline.setAttribute('aria-label', TAGLINE_TEXT);
-  header.appendChild(tagline);
-
-  // After header reveal: typewriter + toggle entrance + ripple
-  header.addEventListener('transitionend', function onReveal(e) {
-    if (e.target !== header) return;
-    header.removeEventListener('transitionend', onReveal);
-    typewrite(tagline, TAGLINE_TEXT);
-    toggle.classList.remove('toggle-hidden');
-    spawnLoadRipple(toggle);
-  });
+  header.appendChild(elText('p', profile.tagline, 'tagline'));
 
   // Links row
   const links = el('nav', 'links-row');
+  links.setAttribute('aria-label', 'Contact and profiles');
   const linkData = [
     { label: 'GitHub', url: profile.links.github },
     { label: 'LinkedIn', url: profile.links.linkedin },
@@ -253,8 +244,9 @@ function renderHeader(profile) {
 
   // Theme toggle — aligned with the name, right side
   const toggle = document.createElement('button');
-  toggle.className = 'theme-toggle toggle-hidden';
+  toggle.className = 'theme-toggle';
   toggle.setAttribute('aria-label', 'Toggle dark mode');
+  toggle.setAttribute('aria-pressed', String(isDarkMode()));
   setToggleIcon(toggle, isDarkMode());
   toggle.addEventListener('click', function () {
     var dark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -263,6 +255,8 @@ function renderHeader(profile) {
     localStorage.setItem('theme', next);
     applyThemeMeta(next);
     setToggleIcon(toggle, next === 'dark');
+    toggle.setAttribute('aria-pressed', String(next === 'dark'));
+    window.dispatchEvent(new Event('site:themechange'));
     if (window.rebuildContentMask) window.rebuildContentMask();
   });
   header.appendChild(toggle);
@@ -345,42 +339,6 @@ function renderFooter(profile) {
   p.innerHTML = `&copy; ${new Date().getFullYear()} ${profile.name}`;
   footer.appendChild(p);
 
-  // Live dodecahedron rotation coordinates
-  const coords = el('p', 'footer-coords');
-  coords.textContent = '\u25CB x: 0.0\u00B0  y: 0.0\u00B0  z: 0.0\u00B0';
-  footer.appendChild(coords);
-
-  // Update coordinates from scene.js CSS custom properties
-  // Read from .style directly (not getComputedStyle) to avoid forced recalc
-  var coordLoopId = 0;
-
-  function updateCoords() {
-    coordLoopId = 0;
-
-    if (getSiteCapabilities().mobileLite) {
-      coords.hidden = true;
-      return;
-    }
-
-    coords.hidden = false;
-    var s = document.documentElement.style;
-    var rx = s.getPropertyValue('--dodeca-rx') || '0.0';
-    var ry = s.getPropertyValue('--dodeca-ry') || '0.0';
-    var rz = s.getPropertyValue('--dodeca-rz') || '0.0';
-    coords.textContent = '\u25CB x: ' + rx.trim() + '\u00B0  y: ' + ry.trim() + '\u00B0  z: ' + rz.trim() + '\u00B0';
-    coordLoopId = requestAnimationFrame(updateCoords);
-  }
-
-  window.addEventListener('site:capabilitieschange', function () {
-    if (coordLoopId) {
-      cancelAnimationFrame(coordLoopId);
-      coordLoopId = 0;
-    }
-    updateCoords();
-  });
-
-  updateCoords();
-
   return footer;
 }
 
@@ -406,38 +364,15 @@ function elText(tag, text, className) {
   return element;
 }
 
-/* --- Typewriter effect --- */
-
-function typewrite(el, text, speed) {
-  speed = speed || 40;
-
-  // Accessibility: screen readers get the full text immediately
-  el.setAttribute('aria-label', text);
-  el.textContent = '';
-  el.classList.add('typing');
-
-  // Respect reduced motion preference
-  if (getSiteCapabilities().reducedMotion || getSiteCapabilities().mobileLite) {
-    el.textContent = text;
-    el.classList.remove('typing');
-    return;
-  }
-
-  var i = 0;
-  var interval = setInterval(function () {
-    el.textContent = text.slice(0, ++i);
-    if (i >= text.length) {
-      clearInterval(interval);
-      setTimeout(function () { el.classList.remove('typing'); }, 1000);
-    }
-  }, speed);
-}
-
 /* --- Scroll-triggered reveals --- */
 
 function initScrollReveals() {
   const revealEls = document.querySelectorAll('.reveal, .reveal-stagger');
   const capabilities = getSiteCapabilities();
+  if (capabilities.reducedMotion) {
+    revealEls.forEach((element) => element.classList.add('revealed'));
+    return;
+  }
 
   const observer = new IntersectionObserver(
     (entries) => {
@@ -460,7 +395,7 @@ function initScrollReveals() {
 /* --- Mouse proximity glow + click gleam --- */
 
 function initMouseGlow() {
-  if (getSiteCapabilities().touch) return;
+  if (getSiteCapabilities().touch || getSiteCapabilities().reducedMotion) return;
 
   // Create viewport-wide glow overlay
   var glow = document.createElement('div');
@@ -469,12 +404,14 @@ function initMouseGlow() {
 
   // Track cursor — viewport coordinates (fixed positioning)
   document.addEventListener('mousemove', function (e) {
+    if (getSiteCapabilities().reducedMotion) return;
     glow.style.setProperty('--mouse-x', e.clientX + 'px');
     glow.style.setProperty('--mouse-y', e.clientY + 'px');
   });
 
   // Click gleam — radial pulse from click point
   document.addEventListener('click', function (e) {
+    if (getSiteCapabilities().reducedMotion) return;
     var gleam = document.createElement('div');
     gleam.className = 'click-gleam';
     gleam.style.left = e.clientX + 'px';
@@ -536,24 +473,4 @@ function setToggleIcon(btn, isDark) {
     // Crescent moon icon
     btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor" stroke="none" opacity="0.7"/><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   }
-}
-
-/* --- Load ripple — liquid glass wave from toggle --- */
-
-function spawnLoadRipple(toggle) {
-  if (getSiteCapabilities().reducedMotion || getSiteCapabilities().mobileLite) return;
-
-  var rect = toggle.getBoundingClientRect();
-  var cx = rect.left + rect.width / 2;
-  var cy = rect.top + rect.height / 2;
-
-  var ripple = document.createElement('div');
-  ripple.className = 'load-ripple';
-  ripple.style.left = cx + 'px';
-  ripple.style.top = cy + 'px';
-  document.body.appendChild(ripple);
-
-  ripple.addEventListener('animationend', function () {
-    ripple.remove();
-  });
 }

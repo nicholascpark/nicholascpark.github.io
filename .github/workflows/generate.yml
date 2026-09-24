@@ -1,40 +1,19 @@
-name: Generate artifacts
+name: Check public repository boundary
 
 on:
   push:
-    branches: [main]
-    paths:
-      - nicholas.yaml
-      - identity/voice.md
-      - identity/positioning.md
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
-  generate:
+  privacy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run generate.py
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GENERATE_PROVIDER: anthropic
-        run: python generate.py
-
-      - name: Commit and push if outputs changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add outputs/
-          if git diff --staged --quiet; then
-            echo "No changes to outputs"
-          else
-            git commit -m "chore: regenerate outputs from nicholas.yaml [skip ci]"
-            git push
-          fi
+      - name: Check tracked files and public website data
+        run: python scripts/check_public_data.py

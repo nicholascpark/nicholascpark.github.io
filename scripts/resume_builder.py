@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 import jinja2
@@ -11,8 +12,8 @@ import jinja2
 ROOT = Path(__file__).resolve().parent.parent
 
 # LaTeX special characters to escape in YAML data values.
-# Note: backslash (\) is NOT escaped — YAML values should not contain raw
-# backslashes. '_', '{', '}' are also excluded — they appear in LaTeX commands
+# Note: backslash (\) is NOT escaped; YAML values should not contain raw
+# backslashes. '_', '{', '}' are also excluded; they appear in LaTeX commands
 # and technology names without issue. Handle case-by-case if needed.
 LATEX_SPECIAL = {
     "&": r"\&",
@@ -22,9 +23,6 @@ LATEX_SPECIAL = {
     "~": r"\textasciitilde{}",
     "^": r"\textasciicircum{}",
 }
-
-# Companies after which to insert \pagebreak
-PAGE_BREAK_AFTER = []
 
 
 def latex_escape(text: str) -> str:
@@ -74,10 +72,7 @@ def build_resume(nicholas: dict, dry_run: bool = False) -> tuple[str, str]:
     # 1. Render template
     env = get_jinja_env()
     template = env.get_template("resume.tex.j2")
-    tex_content = template.render(
-        data=nicholas,
-        page_break_after=PAGE_BREAK_AFTER,
-    )
+    tex_content = template.render(data=nicholas)
 
     # 2. Write .tex
     tex_path = outputs_dir / "resume.tex"
@@ -86,45 +81,47 @@ def build_resume(nicholas: dict, dry_run: bool = False) -> tuple[str, str]:
     if dry_run:
         return "outputs/resume.tex", f"[dry-run] Wrote {tex_path}"
 
-    # 3. Copy TLCresume.sty
-    sty_src = ROOT / "latex" / "TLCresume.sty"
-    sty_dst = outputs_dir / "TLCresume.sty"
-    shutil.copy2(sty_src, sty_dst)
-
-    # 4. Check pdflatex is available
+    # 3. Check pdflatex before creating a compilation directory.
     if not shutil.which("pdflatex"):
         raise RuntimeError(
             "pdflatex not found. Install with: brew install basictex\n"
             'Then reload shell: eval "$(/usr/libexec/path_helper)"'
         )
 
-    # 5. Run pdflatex twice (for references/page numbers)
+    # 4. Compile in isolation so failures cannot overwrite the last good PDF.
+    # Keep failed builds and their logs available for diagnosis.
+    build_dir = Path(tempfile.mkdtemp(prefix=".resume-build-", dir=outputs_dir))
+    shutil.copy2(tex_path, build_dir / "resume.tex")
+    shutil.copy2(ROOT / "latex" / "TLCresume.sty", build_dir / "TLCresume.sty")
     for pass_num in (1, 2):
-        result = subprocess.run(
-            ["pdflatex", "-interaction=nonstopmode", "resume.tex"],
-            cwd=outputs_dir,
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        # pdflatex returns non-zero on warnings too; only fail if no PDF produced
-        pdf_path = outputs_dir / "resume.pdf"
-        if result.returncode != 0 and not pdf_path.exists():
-            log_path = outputs_dir / "resume.log"
+        console_path = build_dir / f"pdflatex-pass-{pass_num}.txt"
+        try:
+            result = subprocess.run(
+                ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "resume.tex"],
+                cwd=build_dir,
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            console_path.write_text(str(exc))
             raise RuntimeError(
-                f"pdflatex pass {pass_num} failed (see {log_path}):\n"
-                + result.stdout[-500:]
+                f"pdflatex pass {pass_num} could not complete (see {build_dir})"
+            ) from exc
+        console_path.write_text(result.stdout + result.stderr)
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"pdflatex pass {pass_num} failed (see {build_dir}):\n"
+                + (result.stdout + result.stderr)[-500:]
             )
 
-    # 6. Clean up aux files
-    for ext in (".aux", ".log", ".out", ".fls", ".fdb_latexmk"):
-        aux_file = outputs_dir / f"resume{ext}"
-        if aux_file.exists():
-            aux_file.unlink()
+    pdf_path = build_dir / "resume.pdf"
+    if not pdf_path.is_file():
+        raise RuntimeError(f"pdflatex produced no PDF (see {build_dir})")
 
-    # Also clean up TLCresume.sty copy
-    if sty_dst.exists():
-        sty_dst.unlink()
+    # 5. Publish only a successful two-pass build, then discard its scratch files.
+    os.replace(pdf_path, outputs_dir / "resume.pdf")
+    shutil.rmtree(build_dir)
 
     return "outputs/resume.pdf", "Resume PDF generated"
 

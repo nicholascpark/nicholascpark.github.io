@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Generate artifacts from nicholas.yaml.
+"""Generate private local artifacts from the ignored nicholas.yaml.
+
+Public website content is curated separately in site/profile.json. This command
+never updates that public file; site-content produces a local writing draft.
 
 Usage:
     python generate.py                          # LLM artifacts only (default)
@@ -49,8 +52,9 @@ def detect_provider():
     sys.exit(1)
 
 SITE_CONTENT_HEADER = (
-    "# Auto-generated from nicholas.yaml + voice.md + positioning.md\n"
-    "# Do not edit directly — regenerate with: python generate.py\n\n"
+    "# Private local draft from nicholas.yaml + voice.md + positioning.md\n"
+    "# Not loaded by the public website. Review before manually publishing any text.\n"
+    "# Regenerate with: python generate.py --only site-content\n\n"
 )
 
 
@@ -58,8 +62,18 @@ SITE_CONTENT_HEADER = (
 
 
 def load_sources():
-    """Load nicholas.yaml, voice.md, positioning.md."""
-    with open(ROOT / "nicholas.yaml") as f:
+    """Load the private local profile and writing guides."""
+    profile_path = ROOT / "nicholas.yaml"
+    if not profile_path.is_file():
+        print(
+            "Error: local profile nicholas.yaml is missing.\n"
+            "Restore your private local copy to the repository root. It is intentionally "
+            "ignored by Git; do not commit it.\n"
+            "For public website edits, use site/profile.json instead.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+    with open(profile_path) as f:
         nicholas = yaml.safe_load(f)
     with open(ROOT / "identity" / "voice.md") as f:
         voice = f.read()
@@ -189,7 +203,7 @@ def format_education_summary(nicholas):
 
 
 def generate_site_content(nicholas, voice, positioning, call_llm):
-    """Generate about prose for the website."""
+    """Generate a private About-section draft for manual review."""
     instruction = (
         "Write exactly 2 paragraphs for a personal website About section. "
         "Each paragraph should be 2-4 sentences. First person. No markdown formatting.\n\n"
@@ -358,7 +372,7 @@ ARTIFACTS = {
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate text artifacts from nicholas.yaml"
+        description="Generate private local artifacts from ignored nicholas.yaml"
     )
     parser.add_argument(
         "--only", help="Comma-separated artifact names to generate"

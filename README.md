@@ -1,98 +1,84 @@
-# Nicholas C. Park — Personal Identity Infrastructure
+# Nicholas C. Park
 
-Single source of truth for all professional artifacts: website, bios, LinkedIn, resumes.
+The public website and private professional artifacts have separate sources.
+Public content lives in `site/profile.json`. The complete profile, resume, and
+writing drafts stay local and are excluded from Git.
 
-## Architecture
+## Sources and rendering
 
-```
-nicholas.yaml                  ← edit this (single source of truth)
-identity/voice.md              ← how Nicholas sounds (tone, style)
-identity/positioning.md        ← what to emphasize (strategic framing)
-        │
-        ▼
-   generate.py                 ← LLM-powered artifact generation
-        │
-        ├── outputs/site-content.yaml   → render.js (website about section)
-        ├── outputs/bio-short.md        → email sigs, conference badges
-        ├── outputs/bio-long.md         → speaker pages, consulting profiles
-        └── outputs/linkedin-draft.md   → review & post to LinkedIn
-```
+| Path | Purpose | Published? |
+|------|---------|------------|
+| `site/profile.json` | Manually curated website content | Yes |
+| `site/js/render.js`, `site/css/`, `index.html` | Website rendering and design | Yes |
+| `nicholas.yaml` | Private resume and professional profile source | No |
+| `outputs/` | Generated resume, bios, and writing drafts | No |
+| `templates/resume.tex.j2`, `latex/TLCresume.sty` | Reusable resume presentation | Yes |
+| `scripts/resume_builder.py` | Resume build procedure | Yes |
+| `generate.py` | Explicit local artifact generation | Yes |
 
-On commit, a post-commit hook runs `generate.py` via Claude Code CLI (Max subscription).
-On push to `main`, GitHub Actions runs `generate.py` via Anthropic API as a fallback.
+There is no automatic synchronization from the private profile to the public
+website. `generate.py --only site-content` produces an ignored local draft, not
+live website content. Review any text before manually copying it into the public
+JSON. Historical architecture notes describing automatic publication are obsolete;
+this workflow is the current source of truth.
 
-## File Structure
+## Website updates
 
-| Path | Purpose |
-|------|---------|
-| `nicholas.yaml` | All identity + content data (the one file you edit) |
-| `identity/voice.md` | Tone guide for LLM generation |
-| `identity/positioning.md` | Strategic emphasis guide for LLM generation |
-| `outputs/` | Generated artifacts (committed to repo) |
-| `site/` | Website rendering layer (HTML/CSS/JS) |
-| `site/js/render.js` | Fetches `nicholas.yaml` + `outputs/site-content.yaml`, renders page |
-| `generate.py` | Reads source files, calls LLM, writes outputs |
-| `index.html` | GitHub Pages entry point |
+1. Edit `site/profile.json` for public wording, links, interests, and projects.
+2. Preview the website locally and check desktop and mobile layouts.
+3. Run `python3 scripts/check_public_data.py`, inspect the staged diff, then commit.
 
-## Editing Workflow
+Keep content in the public JSON and presentation behavior in code. The JSON uses
+an explicit field allowlist; it does not contain employment history, work dates,
+resume sections, phone numbers, or private positioning notes. CI checks the tracked
+file boundary and public JSON structure without generating or publishing content.
+The old post-commit generation hook is disabled.
 
-1. Edit `nicholas.yaml`
-2. `git commit` — post-commit hook runs `generate.py` via Claude Code CLI, auto-commits outputs
-3. `git push` — GitHub Pages deploys the site
+`.gitignore` prevents ordinary additions but does not remove previously tracked
+files or erase Git history. Private files must also be untracked. This repository
+boundary protects new local updates; older committed versions remain in history.
 
-That's it. One file to edit, everything downstream regenerates.
+## Local resume updates
 
-## Setup
+Restore your private `nicholas.yaml` into a fresh checkout from your own local
+backup. It is intentionally absent from the public repository. Install Python
+dependencies with `pip install -r requirements.txt`; PDF generation also needs
+`pdflatex` and the fonts/packages referenced by the LaTeX style.
 
-Enable the post-commit hook (one-time):
-
-```bash
-git config core.hooksPath .githooks
-```
-
-## Running Locally
+Edit `nicholas.yaml` for resume wording, dates, project order, and skill categories.
+The keys in `skills` are the displayed category labels, in display order. Generate
+both LaTeX and PDF with:
 
 ```bash
-pip install -r requirements.txt
-
-python generate.py                          # generate all (auto-detects provider)
-python generate.py --only site-content      # one artifact
-python generate.py --only bio-short,bio-long  # subset
-python generate.py --provider anthropic     # use API instead of CLI
-python generate.py --dry-run                # print prompts, no LLM calls
+PYTHONDONTWRITEBYTECODE=1 python3 generate.py --only resume
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
 ```
 
-### Provider Auto-Detection
+Do not edit `outputs/resume.tex` directly. Keep all organizations in one continuous
+Work Experience section, followed by Skills and Research. Routine content updates
+should not change the template or builder. Renderer changes should fix general
+layout or build defects, without special cases for a company or a resume revision.
 
-`generate.py` automatically selects the best available provider:
+The builder compiles in an isolated directory and replaces the PDF only after two
+successful passes. Failed builds preserve the previous PDF and retain diagnostics
+in the reported build directory. Before delivering a revision, render every page
+with `pdftoppm` and check readability, page transitions, and text extraction against
+the YAML. A successful compilation alone does not establish a correct layout.
 
-1. **`claude-code`** — Claude Code CLI (uses Max subscription, no API key needed)
-2. **`anthropic`** — Anthropic API (requires `ANTHROPIC_API_KEY`)
-3. **`openai`** — OpenAI API (requires `OPENAI_API_KEY`)
+## Local writing drafts
 
-Override with `--provider` flag or `GENERATE_PROVIDER` env var.
+These commands read the private profile and write ignored files under `outputs/`.
+They are never run automatically by Git hooks or CI.
 
-## Environment Variables
+```bash
+python3 generate.py --only site-content         # local About-section draft
+python3 generate.py --only bio-short,bio-long   # local bio drafts
+python3 generate.py --only linkedin-about      # local LinkedIn draft
+python3 generate.py --dry-run                  # placeholders, no LLM calls
+```
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `ANTHROPIC_API_KEY` | Only for CI / API provider | — | Anthropic API key |
-| `OPENAI_API_KEY` | Only if using OpenAI | — | OpenAI API key |
-| `GENERATE_PROVIDER` | No | auto-detect | LLM provider (`claude-code`, `anthropic`, or `openai`) |
-| `ANTHROPIC_MODEL` | No | `claude-sonnet-4-20250514` | Anthropic model ID |
-| `OPENAI_MODEL` | No | `gpt-4o` | OpenAI model ID |
-
-## Downstream Artifacts
-
-| Artifact | Output Path | Consumer | Description |
-|----------|-------------|----------|-------------|
-| Site prose | `outputs/site-content.yaml` | `render.js` | About section on website |
-| Short bio | `outputs/bio-short.md` | Manual copy-paste | 1-2 sentences for email sigs |
-| Long bio | `outputs/bio-long.md` | Manual copy-paste | Full paragraph for speaker pages |
-| LinkedIn draft | `outputs/linkedin-draft.md` | Review → LinkedIn | About section draft |
-
-## Future Work
-
-- **LinkedIn Playwright agent** — auto-update LinkedIn profile from `outputs/linkedin-draft.md` using [microsoft/playwright](https://github.com/microsoft/playwright)
-- **Resume PDF** — generate printable resume from `nicholas.yaml`
-- **Zealot Analytics site** — separate repo, linked hierarchically from this one
+LLM generation uses the Claude Code CLI if installed, then `ANTHROPIC_API_KEY`,
+then `OPENAI_API_KEY`. Override selection with `--provider` or `GENERATE_PROVIDER`.
+The optional `ANTHROPIC_MODEL` and `OPENAI_MODEL` variables select models. Running
+an LLM draft command sends its source text to the selected provider. Resume
+rendering does not use an LLM.

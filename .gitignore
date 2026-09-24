@@ -1,20 +1,19 @@
-# Build artifacts
-outputs/resume.pdf
-outputs/TLCresume.sty
-outputs/*.aux
-outputs/*.log
-outputs/*.out
-outputs/*.fls
-outputs/*.fdb_latexmk
+# Private local profile and generated artifacts
+/nicholas.yaml
+/outputs/*
+!/outputs/.gitkeep
+/docs/superpowers/**/*resume*.md
+/latex/*
+!/latex/TLCresume.sty
 
-# LinkedIn session state
+# Python and editor/agent caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.claude/
 .playwright-state/
+.playwright-mcp/
+.superpowers/
 
 # macOS
 .DS_Store
-
-# Superpowers plugin cache
-.superpowers/
-
-# Playwright MCP logs
-.playwright-mcp/

@@ -1,8 +1,6 @@
 /**
- * Site renderer — reads nicholas.yaml (source of truth) and
- * outputs/site-content.yaml (generated prose), renders the page into #root.
- *
- * Dependencies: js-yaml (loaded via CDN in index.html)
+ * Site renderer: reads the explicitly public site/profile.json.
+ * Private resume sources and generated drafts are never fetched by the browser.
  */
 
 const SITE_BREAKPOINTS = {
@@ -111,10 +109,8 @@ document.documentElement.classList.add('is-loading');
   root.innerHTML = createLoadingShell();
 
   try {
-    const [nicholas, siteContent] = await Promise.all([
-      fetchYAML('nicholas.yaml'),
-      fetchYAML('outputs/site-content.yaml'),
-    ]);
+    const nicholas = await fetchProfile('site/profile.json');
+    const siteContent = nicholas;
 
     root.innerHTML = '';
     root.appendChild(wrapGlass(renderHeader(nicholas), 'glass-card-header'));
@@ -145,11 +141,10 @@ document.documentElement.classList.add('is-loading');
 
 /* --- Data fetching --- */
 
-async function fetchYAML(path) {
+async function fetchProfile(path) {
   const response = await fetch(path);
   if (!response.ok) throw new Error(`Failed to fetch ${path}: ${response.status}`);
-  const text = await response.text();
-  return jsyaml.load(text);
+  return response.json();
 }
 
 function createLoadingShell(message) {
@@ -211,7 +206,7 @@ function renderHeader(profile) {
   header.appendChild(elText('h1', profile.name));
 
   // Tagline — typed in after header reveals
-  const TAGLINE_TEXT = 'Software Engineer \u00b7 AI Agents \u00b7 Applied Cognition';
+  const TAGLINE_TEXT = profile.tagline;
   const tagline = el('p', 'tagline');
   tagline.setAttribute('aria-label', TAGLINE_TEXT);
   header.appendChild(tagline);
@@ -302,9 +297,6 @@ function renderInterests(nicholas) {
 
     const name = el('div', 'interest-name');
     name.textContent = interest.name;
-    const depth = el('span', 'interest-depth');
-    depth.textContent = interest.depth;
-    name.appendChild(depth);
     li.appendChild(name);
 
     const desc = el('div', 'interest-description');

@@ -36,12 +36,12 @@
       {
         "name": "MADDPG Google Football",
         "url": "https://github.com/nicholascpark/MADDPGGoogleFootball",
-        "tagline": "Training cooperative agents in simulated football and comparing coordination and training efficiency with non-cooperative baselines."
+        "tagline": "Graduate course project training cooperative football agents and comparing coordination and training efficiency with non-cooperative baselines."
       },
       {
         "name": "Adversarial NLI Filtering",
         "url": "https://github.com/nicholascpark/adversarially-filter-ANLI-aflite",
-        "tagline": "Comparing adversarial filtering with random subsampling to study how training-data selection affects language-model accuracy."
+        "tagline": "Graduate course project comparing adversarial filtering with random subsampling to study how training-data selection affects language-model accuracy."
       },
       {
         "name": "Via Negativa",

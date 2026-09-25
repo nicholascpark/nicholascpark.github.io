@@ -78,12 +78,14 @@
 \noindent
 \VAR{data.about.objective | trim | latex_escape}
 
+\BLOCK{for section in data.get("resume_section_order", ["education", "work", "skills", "research", "exams"])}
+\BLOCK{if section == "education"}
 \section{Education}
 \BLOCK{for edu in data.education}
 \BLOCK{if edu.gpa}
-\subsection{{\VAR{edu.degree | latex_escape} (GPA: \VAR{edu.gpa})} | \textit{\VAR{edu.institution | latex_escape}} \hfill \VAR{edu.years}}
+\resumeentryheading{{\VAR{edu.degree | latex_escape} (GPA: \VAR{edu.gpa})} | \textit{\VAR{edu.institution | latex_escape}} \hfill \VAR{edu.years}}
 \BLOCK{else}
-\subsection{{\VAR{edu.degree | latex_escape}} | \textit{\VAR{edu.institution | latex_escape}} \hfill \VAR{edu.years}}
+\resumeentryheading{{\VAR{edu.degree | latex_escape}} | \textit{\VAR{edu.institution | latex_escape}} \hfill \VAR{edu.years}}
 \BLOCK{endif}
 \BLOCK{if edu.coursework}
 \begin{zitemize}
@@ -94,9 +96,9 @@
 
 \BLOCK{endif}
 \BLOCK{endfor}
-\vspace{4mm} % Add space between title and list
 
-\section{Work Experience (By Project Per Organization)}
+\BLOCK{elif section == "work"}
+\section{\VAR{data.get("resume_sections", {}).get("work", "Work Experience (By Project Per Organization)") | latex_escape}}
 \BLOCK{for company in data.experience}
 %====================
 \BLOCK{if company.contracted_via}
@@ -107,11 +109,14 @@
 \organizationheading{\VAR{company.company | latex_escape}}{\VAR{company.role | latex_escape} {\small(\VAR{company.industry | latex_escape})}}{\VAR{company.years}}
 \BLOCK{endif}
 \begin{organizationprojects}
+\BLOCK{if company.description}
+\noindent\textit{\VAR{company.description | trim | latex_escape}}\par\nobreak
+\BLOCK{endif}
 \BLOCK{for project in company.projects}
 \projectheading{\VAR{project.name | latex_escape}}{\VAR{project.technologies | default([]) | join(", ") | latex_escape}}
 \begin{zitemize}
 \BLOCK{for highlight in project.highlights}
-\item \VAR{highlight | trim | latex_escape}
+\item \VAR{highlight | trim | latex_inline}
 \BLOCK{endfor}
 \end{zitemize}
 \BLOCK{if not loop.last}
@@ -119,12 +124,9 @@
 \BLOCK{endif}
 \BLOCK{endfor}
 \end{organizationprojects}
-\BLOCK{if not loop.last}
-\vspace{0.3em}
-
-\BLOCK{endif}
 \BLOCK{endfor}
 
+\BLOCK{elif section == "skills"}
 \section{Skills}
 % Skill category names, order, and values all come from YAML.
 \begin{tabular}{p{11em} p{1em} p{43em}}
@@ -133,18 +135,18 @@
 \BLOCK{endfor}
 \end{tabular}
 
-\vspace{2mm} % Add space between title and list
 
+\BLOCK{elif section == "research"}
 % Keep this short research section together when preceding content grows.
 \begin{samepage}
-\section{Advanced Machine Learning Research}
+\section{\VAR{data.get("resume_sections", {}).get("research", "Advanced Machine Learning Research") | latex_escape}}
 \BLOCK{for item in data.research}
-\subsection{{\VAR{item.category | replace("-", " ") | title | replace("Nlp", "NLP") | latex_escape} (\VAR{item.technologies | join(", ") | latex_escape}) \hfill \VAR{item.period}}}
+\resumeentryheading{{\VAR{item.name | latex_escape} {\normalfont\small(\VAR{item.technologies | join(", ") | latex_escape})}\BLOCK{if item.url} {\normalfont\small\href{\VAR{item.url}}{Code}}\BLOCK{endif} \hfill \VAR{item.period}}}
 \begin{zitemize}
 \BLOCK{if item.status}
-\item \normalfont \VAR{item.description | trim | latex_escape} \bf{(\VAR{item.status | latex_escape})}
+\item \normalfont \VAR{item.description | trim | latex_inline} \bf{(\VAR{item.status | latex_escape})}
 \BLOCK{else}
-\item \normalfont \VAR{item.description | trim | latex_escape}
+\item \normalfont \VAR{item.description | trim | latex_inline}
 \BLOCK{endif}
 \end{zitemize}
 
@@ -155,15 +157,18 @@
 
 \end{samepage}
 
-\section{Actuarial Exams (Pre-Associateship in the Casualty Actuarial Society)}
-\begin{zitemize}
+\BLOCK{elif section == "exams"}
+\section{\VAR{data.get("resume_sections", {}).get("exams", "Actuarial Exams (Pre-Associateship in the Casualty Actuarial Society)") | latex_escape}}
+\noindent
 \BLOCK{for exam in data.actuarial_exams}
 \BLOCK{if exam.note}
-\item \VAR{exam.name | latex_escape} (\VAR{exam.note | latex_escape})
+\VAR{exam.name | latex_escape} (\VAR{exam.note | latex_escape})
 \BLOCK{else}
-\item \VAR{exam.name | latex_escape}
+\VAR{exam.name | latex_escape}
+\BLOCK{endif}
+\BLOCK{if not loop.last} \textbullet{} \BLOCK{endif}
+\BLOCK{endfor}
+
 \BLOCK{endif}
 \BLOCK{endfor}
-\end{zitemize}
-
 \end{document}

@@ -37,11 +37,15 @@
 
 % SECTION FORMATTING
 \RequirePackage[nostruts]{titlesec}
-\titlespacing*{\section}{0em}{0.5em}{0em}
+\titlespacing*{\section}{0em}{9pt}{3pt}
 \titleformat{\section}{\color{highlight} \scshape \raggedright \large}{}{0em}{}[\vspace{-0.75em}\hrulefill]
 % SUBSECTION FORMATTING
-\titlespacing*{\subsection}{0em}{0em}{0em}
+\titlespacing*{\subsection}{0em}{2pt}{0em}
 \titleformat{\subsection}{\bfseries}{}{0em}{}[]
+
+% Data-entry headings must not suppress the next major section's spacing.
+\newcommand{\resumeentryheading}[1]{%
+  \par\addvspace{2pt}\noindent{\bfseries #1}\par\nobreak}
 
 % BOLD COMMAND
 \newcommand{\skills}[1]{ {\bfseries #1}}
@@ -51,21 +55,23 @@
 % SUBTEXT
 \newcommand{\subtext}[1]{\textit{#1}\par\vspace{-.75em}}
 
-% tighter spacing than itemize
+% Use the same list rhythm at every nesting depth.
 \setlist[itemize]{align=parleft,left=0pt..1em}
-\newenvironment{zitemize}{
-\begin{itemize} \itemsep 0pt \parskip 0pt \parsep 1pt}
-{\end{itemize}\vspace{-.5em}}
+\newenvironment{zitemize}{%
+  \begin{itemize}[topsep=1pt,partopsep=0pt,itemsep=0pt,parsep=0pt]%
+  % Keep each bullet paragraph together, while allowing breaks between bullets.
+  \interlinepenalty=10000\relax%
+}{\end{itemize}}
 
 % Organization/project hierarchy is presentation only; content comes from YAML.
 \newcommand{\organizationheading}[3]{%
   \par\ifdim\dimexpr\pagegoal-\pagetotal\relax<5\baselineskip\newpage\fi
   \gdef\resume@organization{#1}%
-  \addvspace{0.35em}%
+  \addvspace{7pt}%
   \noindent\begingroup\setlength{\fboxsep}{2pt}%
   \colorbox{highlight!10}{\parbox{\dimexpr\linewidth-2\fboxsep\relax}{%
     \textbf{\color{highlight}#1}\enspace\textbar\enspace#2\hfill\textbf{#3}}}%
-  \endgroup\par\nobreak\vspace{0.15em}}
+  \endgroup\par\nobreak\vspace{1pt}}
 \newenvironment{organizationprojects}{%
   \begin{list}{}{\setlength{\leftmargin}{0.6em}\setlength{\rightmargin}{0pt}%
     \setlength{\topsep}{0pt}\setlength{\partopsep}{0pt}%
@@ -78,10 +84,10 @@
     \noindent{\small\color{highlight}\textbf{\resume@organization}\ (continued)}\par
     \nobreak\vspace{0.2em}%
   \fi
-  \addvspace{0.2em}\noindent
+  \addvspace{2pt}\noindent
   {\small\color{highlight}\textsc{Project:}}\enspace\textbf{\textit{#1}}%
   \if\relax\detokenize{#2}\relax\else\quad{\small\color{black!65}(#2)}\fi
-  \par\nobreak\vspace{-0.65em}}
+  \par\nobreak}
 
 % NO PAGE NUMBER
 \pagenumbering{gobble}

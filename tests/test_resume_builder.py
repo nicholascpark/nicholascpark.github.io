@@ -9,6 +9,39 @@ from unittest.mock import patch
 from scripts import resume_builder
 
 
+class LatexInlineTests(unittest.TestCase):
+    def test_plain_text_keeps_existing_escaping(self):
+        for value in ("Plain sentence.", "R&D improved 5% for $2 #1 ~ ^", "", 42):
+            with self.subTest(value=value):
+                self.assertEqual(resume_builder.latex_inline(value),
+                                 resume_builder.latex_escape(value))
+
+    def test_multiple_bold_spans(self):
+        self.assertEqual(
+            resume_builder.latex_inline("**Evaluation:** measured **error** on held-out data."),
+            r"\textbf{Evaluation:} measured \textbf{error} on held-out data.",
+        )
+
+    def test_special_characters_are_escaped_inside_and_outside_bold(self):
+        literal = r"\input{file_name} & 5% $2 #1 ~ ^"
+        escaped = (r"\textbackslash{}input\{file\_name\} \& 5\% \$2 \#1 "
+                   r"\textasciitilde{} \textasciicircum{}")
+        self.assertEqual(resume_builder.latex_inline(literal + " **" + literal + "**"),
+                         escaped + r" \textbf{" + escaped + "}")
+
+    def test_unmatched_markers_stay_literal(self):
+        for value in ("**unfinished & 5%", "unfinished**", "****"):
+            with self.subTest(value=value):
+                self.assertEqual(resume_builder.latex_inline(value),
+                                 resume_builder.latex_escape(value))
+        self.assertEqual(resume_builder.latex_inline("**Complete** and **unfinished"),
+                         r"\textbf{Complete} and **unfinished")
+
+    def test_other_markup_is_literal(self):
+        value = "<b>literal HTML</b> and *single stars*"
+        self.assertEqual(resume_builder.latex_inline(value), value)
+
+
 class ResumeBuildTests(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -113,6 +146,96 @@ class ResumeStructureTests(unittest.TestCase):
         self.assertEqual(tex.count(r"\section{Work Experience"), 1)
         self.assertIn(r"Methods \& Measurement", tex)
         self.assertIn("Custom evaluation method", tex)
+
+    def test_inline_emphasis_is_limited_to_bullets_and_research_descriptions(self):
+        data = {
+            "name": "Example Candidate", "phone": "(202) 555-0100",
+            "location": "Example City", "citizenship": "Example citizenship",
+            "resume_title": "Example title",
+            "links": {"email": "example@example.com",
+                      "github": "https://github.com/example",
+                      "linkedin": "https://www.linkedin.com/in/example/"},
+            "about": {"objective": "**Literal objective**"},
+            "education": [], "skills": {}, "actuarial_exams": [],
+            "experience": [{
+                "company": "Example Organization", "role": "Example Role",
+                "industry": "Example Industry", "years": "2020 - 2021",
+                "projects": [{
+                    "name": "**Literal project name**", "technologies": [],
+                    "highlights": ["**Evaluation:** reduced error & cost.",
+                                   "Plain highlight stays unchanged."],
+                }],
+            }],
+            "research": [
+                {"name": "Example Study", "technologies": [], "period": "2020",
+                 "description": "**Method:** compared model_a & model_b.",
+                 "status": status}
+                for status in ("", "In progress")
+            ],
+        }
+        tex = resume_builder.get_jinja_env().get_template("resume.tex.j2").render(data=data)
+        self.assertIn(r"\item \textbf{Evaluation:} reduced error \& cost.", tex)
+        self.assertIn(r"\item Plain highlight stays unchanged.", tex)
+        self.assertEqual(tex.count(r"\textbf{Method:} compared model\_a \& model\_b."), 2)
+        self.assertIn("**Literal objective**", tex)
+        self.assertIn("**Literal project name**", tex)
+
+
+    def test_section_order_and_visibility_come_from_yaml(self):
+        data = {
+            "name": "Example Candidate", "phone": "(202) 555-0100",
+            "location": "Example City", "citizenship": "Example citizenship",
+            "resume_title": "Example title",
+            "links": {"email": "example@example.com",
+                      "github": "https://github.com/example",
+                      "linkedin": "https://www.linkedin.com/in/example/"},
+            "about": {"objective": "Profile marker"},
+            "education": [{"degree": "Example Degree", "institution": "Example School",
+                           "years": "2020", "gpa": "", "coursework": []}],
+            "experience": [
+                {"company": f"Organization {i}", "role": "Example Role",
+                 "industry": "Example Industry", "years": "2020 - 2021",
+                 "projects": [{"name": f"Project {i}", "technologies": [],
+                               "highlights": [f"Work marker {i}"]}]}
+                for i in range(2)
+            ],
+            "skills": {"Example Skills": ["Skill marker"]},
+            "research": [{"name": "Example Study", "technologies": [], "period": "2020",
+                          "description": "Research marker", "status": ""}],
+            "actuarial_exams": [{"name": "Example Exam", "note": "Exam note"}],
+            "resume_sections": {"work": "Work", "research": "Research", "exams": "Exams"},
+        }
+        template = resume_builder.get_jinja_env().get_template("resume.tex.j2")
+
+        def headings(tex):
+            return [line for line in tex.splitlines() if line.startswith(r"\section{")]
+
+        default_tex = template.render(data=data)
+        self.assertEqual(headings(default_tex), [
+            r"\section{Education}", r"\section{Work}", r"\section{Skills}",
+            r"\section{Research}", r"\section{Exams}",
+        ])
+        self.assertIn("Example Exam (Exam note)", default_tex)
+
+        data["resume_section_order"] = ["skills", "work", "education", "research"]
+        tex = template.render(data=data)
+        self.assertEqual(headings(tex), [
+            r"\section{Skills}", r"\section{Work}", r"\section{Education}",
+            r"\section{Research}",
+        ])
+        markers = ["Profile marker", "Skill marker", "Work marker 0", "Work marker 1",
+                   "Example Degree", "Research marker"]
+        positions = [tex.index(marker) for marker in markers]
+        self.assertEqual(positions, sorted(positions))
+        self.assertNotIn("Example Exam", tex)
+        self.assertEqual(data["actuarial_exams"],
+                         [{"name": "Example Exam", "note": "Exam note"}])
+
+        data["resume_section_order"] = []
+        tex = template.render(data=data)
+        self.assertEqual(headings(tex), [])
+        self.assertIn("Profile marker", tex)
+        self.assertIn(r"\def\name{Example Candidate}", tex)
 
 
 if __name__ == "__main__":

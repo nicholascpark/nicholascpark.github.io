@@ -34,8 +34,26 @@ def latex_escape(text: str) -> str:
     return text
 
 
+def latex_inline(text: str) -> str:
+    """Render paired **bold** spans, escaping all input as literal LaTeX text."""
+    replacements = {
+        **LATEX_SPECIAL,
+        "\\": r"\textbackslash{}",
+        "_": r"\_",
+        "{": r"\{",
+        "}": r"\}",
+    }
+    # Captured spans alternate with literal text. Unmatched markers stay literal.
+    parts = re.split(r"\*\*(.+?)\*\*", str(text), flags=re.DOTALL)
+    rendered = []
+    for index, part in enumerate(parts):
+        escaped = "".join(replacements.get(char, char) for char in part)
+        rendered.append(r"\textbf{" + escaped + "}" if index % 2 else escaped)
+    return "".join(rendered)
+
+
 def format_phone(phone: str) -> str:
-    """Format phone for resume header: (202) 555-0100 → (+1) (202) 555-0100."""
+    """Format phone for resume header: (202) 555-0100 → (+1) (202) 555 - 0100."""
     m = re.match(r"\((\d{3})\)\s*(\d{3})-(\d{4})", phone)
     if m:
         return f"(+1) ({m.group(1)}) {m.group(2)} - {m.group(3)}"
@@ -57,6 +75,7 @@ def get_jinja_env() -> jinja2.Environment:
         lstrip_blocks=True,
     )
     env.filters["latex_escape"] = latex_escape
+    env.filters["latex_inline"] = latex_inline
     env.filters["format_phone"] = format_phone
     return env
 

@@ -2,7 +2,7 @@
 
 The public website and private professional artifacts have separate sources.
 Public content lives in `site/profile.json`. The complete profile, resume, and
-writing drafts stay local and are excluded from Git.
+writing drafts are excluded from this public repository.
 
 ## Sources and rendering
 
@@ -40,14 +40,22 @@ boundary protects new local updates; older committed versions remain in history.
 
 ## Local resume updates
 
-Restore your private `nicholas.yaml` into a fresh checkout from your own local
-backup. It is intentionally absent from the public repository. Install Python
+Restore your private `nicholas.yaml` into a fresh checkout from a separate private
+repository or local backup. An ignored symlink to that private checkout also works,
+so edits update one canonical source. Commit and push profile changes from the
+private repository; public renderer commits do not back up the profile.
+It is intentionally absent from the public repository. Install Python
 dependencies with `pip install -r requirements.txt`; PDF generation also needs
 `pdflatex` and the fonts/packages referenced by the LaTeX style.
 
 Edit `nicholas.yaml` for resume wording, dates, project order, and skill categories.
-The keys in `skills` are the displayed category labels, in display order. Generate
-both LaTeX and PDF with:
+The keys in `skills` are the displayed category labels, in display order. Work
+project highlights and research descriptions support selective bold text using
+paired `**` markers, for example `"**Evaluation:** Measured error on held-out data."`.
+Quote YAML strings that start with `**`. Other Markdown, HTML, and raw LaTeX are
+not interpreted in these fields; unmatched `**` markers remain literal.
+
+Generate both LaTeX and PDF with:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 generate.py --only resume
@@ -55,9 +63,16 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
 ```
 
 Do not edit `outputs/resume.tex` directly. Keep all organizations in one continuous
-Work Experience section, followed by Skills and Research. Routine content updates
-should not change the template or builder. Renderer changes should fix general
-layout or build defects, without special cases for a company or a resume revision.
+Work Experience section. Set `resume_section_order` in the private YAML to order
+sections using the keys `education`, `work`, `skills`, `research`, and `exams`.
+Without that key, sections appear in the order listed here. An omitted section
+does not render; its data stays in the YAML. For example,
+`resume_section_order: [skills, work, education, research]` puts skills first and
+hides exams. Add `exams` back to the list to show them again.
+
+Routine content updates should not change the template or builder. Renderer
+changes should fix general layout or build defects, without special cases for a
+company or a resume revision.
 
 The builder compiles in an isolated directory and replaces the PDF only after two
 successful passes. Failed builds preserve the previous PDF and retain diagnostics

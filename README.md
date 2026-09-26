@@ -11,6 +11,7 @@ writing drafts are excluded from this public repository.
 | `site/profile.json` | Manually curated website content | Yes |
 | `site/js/render.js`, `site/css/`, `index.html` | Website rendering and design | Yes |
 | `nicholas.yaml` | Private resume and professional profile source | No |
+| `identity/positioning.md` | Optional private writing strategy | No |
 | `outputs/` | Generated resume, bios, and writing drafts | No |
 | `templates/resume.tex.j2`, `latex/TLCresume.sty` | Reusable resume presentation | Yes |
 | `scripts/resume_builder.py` | Resume build procedure | Yes |
@@ -31,12 +32,14 @@ this workflow is the current source of truth.
 Keep content in the public JSON and presentation behavior in code. The JSON uses
 an explicit field allowlist; it does not contain employment history, work dates,
 resume sections, phone numbers, or private positioning notes. CI checks the tracked
-file boundary and public JSON structure without generating or publishing content.
+file boundary, public JSON structure, copied profile notes, and phone examples
+without generating or publishing content. Use fictional organizations and phone
+examples in the reserved 555-0100–0199 range in code, tests, and documentation.
 The old post-commit generation hook is disabled.
 
 `.gitignore` prevents ordinary additions but does not remove previously tracked
-files or erase Git history. Private files must also be untracked. This repository
-boundary protects new local updates; older committed versions remain in history.
+files or erase Git history. Private files must also be untracked. Removing an
+accidentally published file requires a separate history and hosting cleanup.
 
 ## Local resume updates
 
@@ -44,6 +47,8 @@ Restore your private `nicholas.yaml` into a fresh checkout from a separate priva
 repository or local backup. An ignored symlink to that private checkout also works,
 so edits update one canonical source. Commit and push profile changes from the
 private repository; public renderer commits do not back up the profile.
+Optional personal writing strategy can be restored to ignored
+`identity/positioning.md` from a private backup. Generation also works without it.
 It is intentionally absent from the public repository. Install Python
 dependencies with `pip install -r requirements.txt`; PDF generation also needs
 `pdflatex` and the fonts/packages referenced by the LaTeX style.

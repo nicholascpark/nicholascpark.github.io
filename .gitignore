@@ -1,8 +1,12 @@
 # Private local profile and generated artifacts
 /nicholas.yaml
+/identity/profile.yaml
+/identity/positioning.md
+/content/*.yaml
 /outputs/*
 !/outputs/.gitkeep
 /docs/superpowers/**/*resume*.md
+/docs/superpowers/**/*nicholas-yaml*.md
 /latex/*
 !/latex/TLCresume.sty
 

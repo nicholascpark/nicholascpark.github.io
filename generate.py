@@ -77,8 +77,9 @@ def load_sources():
         nicholas = yaml.safe_load(f)
     with open(ROOT / "identity" / "voice.md") as f:
         voice = f.read()
-    with open(ROOT / "identity" / "positioning.md") as f:
-        positioning = f.read()
+    # Personal positioning notes are optional private input, never public source.
+    positioning_path = ROOT / "identity" / "positioning.md"
+    positioning = positioning_path.read_text() if positioning_path.is_file() else ""
     return nicholas, voice, positioning
 
 

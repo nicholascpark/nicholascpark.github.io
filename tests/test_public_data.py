@@ -1,9 +1,34 @@
 import unittest
 
-from scripts.check_public_data import private_tracked_paths, validate_public_profile
+from scripts.check_public_data import (
+    inspect_public_text, private_tracked_paths, validate_public_profile,
+)
 
 
 class PublicDataTests(unittest.TestCase):
+    def test_old_source_paths_and_profile_copy_notes_are_private(self):
+        paths = [
+            "identity/profile.yaml", "identity/positioning.md", "content/resume.yaml",
+            "content/projects.yaml", "content/interests.yaml",
+            "docs/superpowers/specs/2026-03-15-nicholas-yaml-consolidation-design.md",
+            "docs/superpowers/plans/2026-03-16-nicholas-yaml-consolidation.md",
+        ]
+        self.assertEqual(private_tracked_paths(paths), paths)
+
+    def test_renamed_markdown_copy_of_profile_is_rejected(self):
+        copied_note = "# Design example\n```yaml\neducation:\n  - institution: Example College\n```\n"
+        errors = inspect_public_text(copied_note, "docs/ordinary-design.md")
+        self.assertTrue(any("copied profile fields" in error for error in errors))
+
+    def test_phone_scan_allows_fictional_examples_and_does_not_echo_numbers(self):
+        # Assemble the disallowed fixture so it cannot itself be mistaken for public prose.
+        phone = "(202) " + "234" + "-" + "5678"
+        errors = inspect_public_text(phone, "notes.md")
+        self.assertEqual(len(errors), 1)
+        self.assertNotIn(phone, errors[0])
+        self.assertEqual(inspect_public_text("(202) 555-0100", "example.py"), [])
+        self.assertEqual(inspect_public_text("(+1) (202) 555 - 0100", "example.py"), [])
+
     def test_private_artifacts_are_rejected_but_generic_renderer_sources_are_allowed(self):
         paths = [
             "nicholas.yaml", "outputs/resume.pdf", "outputs/nested/draft.md",
